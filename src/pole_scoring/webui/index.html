@@ -1,0 +1,799 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pole Scoring Local</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body class="app-body">
+    <div class="app-shell" data-sidebar-state="expanded">
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-top">
+          <button class="sidebar-toggle" id="sidebar-toggle" type="button" aria-label="Masquer la navigation">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+
+          <div class="brand-lockup">
+            <div class="brand-mark" aria-hidden="true">
+              <img src="/assets/img/Pole-scoring.png" alt="Logo pole scoring">
+            </div>
+            <div class="brand-copy">
+              
+              <h1>Pole Dance</h1>
+              <p>Logiciel de scrutation</p>
+            </div>
+          </div>
+        </div>
+
+        <nav class="nav-list" aria-label="Navigation principale">
+          <button class="nav-item is-active" type="button" data-section="dashboard" data-title="Vue d'ensemble" data-subtitle="Statut réseau, activité et accès rapides." data-tooltip="Vue d'ensemble">
+            <span class="nav-icon" aria-hidden="true">
+              <img src="/assets/icons/dashboard.svg" alt="">
+            </span>
+            <span class="nav-text"><strong>Vue d'ensemble</strong><small>Etat de l'application</small></span>
+          </button>
+          <button class="nav-item" type="button" data-section="login" data-title="Connexion" data-subtitle="Ouvrir une session d'accès." data-tooltip="Connexion">
+            <span class="nav-icon" aria-hidden="true">
+              <img src="/assets/icons/access-off.svg" alt="">
+            </span>
+            <span class="nav-text"><strong>Connexion</strong><small>Ouvrir une session</small></span>
+          </button>
+          <button class="nav-item" type="button" data-section="competitions" data-title="Compétitions" data-subtitle="Créer un événement et suivre les résultats." data-tooltip="Compétitions">
+            <span class="nav-icon" aria-hidden="true">
+              <img src="/assets/icons/competitions.svg" alt="">
+            </span>
+            <span class="nav-text"><strong>Compétitions</strong><small>Gestion des événements</small></span>
+          </button>
+          <button class="nav-item" type="button" data-section="judges" data-title="Juges" data-subtitle="Affectations, tablettes et rôles de jugement." data-tooltip="Juges">
+            <span class="nav-icon" aria-hidden="true">
+              <img src="/assets/icons/judges.png" alt="">
+            </span>
+            <span class="nav-text"><strong>Juges</strong><small>Gestion des juges</small></span>
+          </button>
+          <button class="nav-item" type="button" data-section="competitors" data-title="Compétiteurs" data-subtitle="Ordre de passage et catégories." data-tooltip="Compétiteurs">
+            <span class="nav-icon" aria-hidden="true">
+              <img src="/assets/icons/people_icon.png" alt="">
+            </span>
+            <span class="nav-text"><strong>Compétiteurs</strong><small>Listes et passages</small></span>
+          </button>
+          <button class="nav-item" type="button" data-section="conductor" data-title="Conducteur" data-subtitle="Pilotage des envois vers les tablettes." data-tooltip="Conducteur">
+            <span class="nav-icon" aria-hidden="true">
+              <img src="/assets/icons/conduite.png" alt="">
+            </span>
+            <span class="nav-text"><strong>Conducteur</strong><small>Gestion des notes</small></span>
+          </button>
+          <button class="nav-item" type="button" data-section="statistics" data-title="Statistiques" data-subtitle="Analyse des notes et indicateurs." data-tooltip="Statistiques">
+            <span class="nav-icon" aria-hidden="true">
+              <img src="/assets/icons/stat2.png" alt="">
+            </span>
+            <span class="nav-text"><strong>Résultats & Statistiques</strong><small>Analyse des résultats</small></span>
+          </button>
+          <button class="nav-item" type="button" data-section="settings" data-title="Paramétrages" data-subtitle="Configuration technique des grilles et critères." data-tooltip="Paramétrages">
+            <span class="nav-icon" aria-hidden="true">
+              <img src="/assets/icons/settings.svg" alt="">
+            </span>
+            <span class="nav-text"><strong>Paramétrages</strong><small>Configuration technique - RÉSERVÉ AUX ADMINS -</small></span>
+          </button>
+          <button class="nav-item" type="button" data-section="sync" data-title="Synchronisation" data-subtitle="Fusion des bases et transfert inter-postes." data-tooltip="Synchronisation">
+            <span class="nav-icon" aria-hidden="true">
+              <img src="/assets/icons/sync.svg" alt="">
+            </span>
+            <span class="nav-text"><strong>Synchronisation</strong><small>Fusion locale</small></span>
+          </button>
+          <button class="nav-item" type="button" data-nav-action="logout" data-title="Déconnexion" data-subtitle="Fermer la session et quitter proprement." data-tooltip="Déconnexion" hidden>
+            <span class="nav-icon" aria-hidden="true">
+              <img src="/assets/icons/access-on.svg" alt="">
+            </span>
+            <span class="nav-text"><strong>Déconnexion</strong><small>Quitter la session</small></span>
+          </button>
+        </nav>
+
+        <!--
+        <div class="sidebar-footer">
+          <div class="mini-card">
+            <p class="eyebrow">Identité visuelle</p>
+            <strong>Midnight + Azure</strong>
+            <p>Palette bleue plus institutionnelle, plus nette pour le logo et les écrans de compétition.</p>
+          </div>
+        </div>
+        -->
+        <div class="sidebar-footer">
+          <div class="mini-card">
+            <div class="sidebar-footer-brand">
+              <img src="/assets/img/LOGO_FFD.png" alt="Logo officiel F.F. Danse">
+            </div>
+            <div class="sidebar-footer-copy">
+              <p class="eyebrow">Copyright &copy;</p>
+              <p>Frédérick LE MARTRET</p>
+              <p>Pour la F.F. Danse</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="workspace-header">
+          <div>
+            <!-- <p class="eyebrow" id="view-kicker">Centre de contrôle</p> -->
+            <h2 id="view-title">Vue d'ensemble</h2>
+            <p id="view-subtitle">Statut réseau, activité et accès rapides.</p>
+          </div>
+          <div class="hero-badge">
+            <span class="badge-dot"></span>
+            <span>Mode local sécurisé</span>
+          </div>
+        </header>
+
+        <section class="view is-active" id="view-dashboard" data-view="dashboard">
+          <div class="dashboard-grid">
+            <article class="feature-card spotlight-card">
+              <div>
+                <h3>Une seule console pour piloter juges, écran de, scrutation et fusion des bases.</h3>
+                <p>Le poste principal conserve la vision globale tandis que chaque tablette reste focalisée sur la saisie des notes.</p>
+              </div>
+              <div class="brand-banner" aria-hidden="true">
+                <div class="brand-ribbon"></div>
+                <div class="brand-ribbon secondary"></div>
+              </div>
+            </article>
+
+            <article class="feature-card active-competition-card">
+              <div class="section-head compact">
+                <h3>Compétition active</h3>
+              </div>
+              <div id="active-competition-info"></div>
+            </article>
+
+            <article class="feature-card quick-card quick-actions-bar-card">
+              <div class="quick-actions-bar-head">
+                <h3>Actions rapides</h3>
+              </div>
+              <div class="quick-actions quick-actions-bar">
+                <button type="button" class="quick-action" data-section-target="competitions">Gestion des compétitions</button>
+                <button type="button" class="quick-action" data-section-target="judges">Gestion des juges</button>
+                <button type="button" class="quick-action" data-section-target="sync">Fusionner avec une base</button>
+              </div>
+            </article>
+
+            <article class="feature-card quick-card server-actions-card">
+              <div class="quick-actions-bar-head">
+                <h3>Actions serveur</h3>
+              </div>
+              <div class="quick-actions server-actions-grid">
+                <button type="button" class="quick-action" data-server-control="presenter-results">Envoi des résultats</button>
+                <button type="button" class="quick-action ghost-button" data-server-control="restart">Relance serveur</button>
+                <button type="button" class="quick-action danger-button" data-server-control="shutdown">Quitter serveur</button>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" id="view-competitions" data-view="competitions">
+          <div class="competition-actions-bar" role="tablist" aria-label="Actions compétitions">
+            <button class="competition-mode-button competition-directory-toggle" type="button" data-competition-directory-toggle aria-pressed="false">Liste</button>
+            <button class="competition-mode-button is-active" type="button" data-competition-mode="create" aria-pressed="true">Créer</button>
+            <button class="competition-mode-button" type="button" data-competition-mode="edit" aria-pressed="false">Modifier</button>
+            <button class="competition-mode-button" type="button" data-competition-mode="delete" aria-pressed="false">Supprimer</button>
+          </div>
+
+          <div class="competition-panels">
+            <div id="competition-create-wizard" class="feature-card form-card competition-panel is-active" data-competition-panel="create">
+              <div class="section-head compact">
+                <div>
+                  <h3>Créer une compétition</h3>
+                </div>
+              </div>
+
+              <div class="competition-wizard-steps" aria-label="Etapes de création">
+                <button class="competition-wizard-step is-active" type="button" data-create-step-target="general">1. Informations générales</button>
+                <button class="competition-wizard-step" type="button" data-create-step-target="judges">2. Attribution des juges</button>
+                <button class="competition-wizard-step" type="button" data-create-step-target="competitors">3. Compétiteurs</button>
+              </div>
+
+              <div id="competition-wizard-summary" class="mini-card competition-wizard-summary" hidden></div>
+
+              <form id="competition-form" class="competition-create-step is-active" data-create-step="general">
+                <label class="field-row"><span>Titre</span><input name="name" placeholder="Ex. Championnat régional 2026" required></label>
+                <label class="field-row"><span>Lieu</span><input name="location" placeholder="Ex. Ville (Département)"></label>
+                <div class="competition-form-compact-grid">
+                  <label class="field-row field-row-condensed"><span>Date</span><input name="eventDate" type="date"></label>
+                  <label class="field-row field-row-condensed"><span>Saison</span><select id="competition-season" name="season" required></select></label>
+                  <label class="field-row field-row-condensed"><span>Nb juges</span><select id="competition-judge-count" name="judgeCount" required></select></label>
+                </div>
+                <label class="field-row"><span>Niveau</span><select id="competition-level" name="competitionLevel" required></select></label>
+                <div class="competition-form-inline-grid">
+                  <label class="field-row field-row-condensed competition-regional-field" data-regional-field="region" hidden><span>Région</span><select id="competition-region" name="region"></select></label>
+                  <label class="field-row field-row-condensed competition-regional-field" data-regional-field="zone" hidden><span>Zone</span><input id="competition-zone" name="zone" readonly></label>
+                </div>
+                <label class="field-row"><span>Scrutateur</span><input name="scrutateurName" placeholder="Ex. Camille Dupont" autocomplete="off"></label>
+                <label class="field-row"><span>Mot de passe suppression</span><input name="deletePassword" type="password" placeholder="Propre à cette compétition" autocomplete="new-password"></label>
+                <label class="field-row"><span>Confirmation</span><input name="deletePasswordConfirm" type="password" placeholder="Confirmer le mot de passe" autocomplete="new-password"></label>
+                <label class="field-row field-row-checkbox"><span>Présentateur</span><span class="field-row-checkbox-control"><input id="competition-presenter-enabled" name="presenterEnabled" type="checkbox"><small>Cochez cette case si vous souhaitez qu'un présentateur puisse suivre l'avancement de la compétition sur tablette.</small></span></label>
+                <div class="competition-step-actions">
+                  <button type="submit">Enregistrer et continuer</button>
+                </div>
+              </form>
+
+              <section class="competition-create-step" data-create-step="judges">
+                <div id="competition-wizard-judges" class="competition-judges-screen"></div>
+                <div class="competition-step-actions">
+                  <button class="ghost-button" type="button" data-create-nav="prev">Etape précédente</button>
+                  <button type="button" data-create-nav="next">Etape suivante</button>
+                </div>
+              </section>
+
+              <section class="competition-create-step" data-create-step="competitors">
+                <div class="mini-card competition-step-intro">
+                  <strong>Etape 3</strong>
+                  <p>Chargez les compétiteurs dès maintenant pour terminer la préparation.</p>
+                </div>
+                <section class="mini-card competition-competitor-import-card">
+                  <div class="competition-competitor-import-head">
+                    <div>
+                      <strong>Importer un classeur Excel</strong>
+                      <p>Le classeur organisateur peut contenir plusieurs feuilles. Seule la feuille Candidats est utilisée ici.</p>
+                    </div>
+                    <span id="competition-competitor-import-sheet" class="competition-competitor-import-sheet">Aucun fichier chargé.</span>
+                  </div>
+                  <label class="field-row">
+                    <span>Classeur Excel</span>
+                    <input id="competition-competitor-import-file" type="file" accept=".xlsx,.xls,.xlsm,.xlsb,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
+                  </label>
+                  <div id="competition-competitor-import-config" class="competition-competitor-import-config" hidden>
+                    <p id="competition-competitor-import-summary" class="competition-competitor-import-summary"></p>
+                    <div class="competition-step-actions">
+                      <button id="competition-competitor-import-submit" type="button">Importer les lignes</button>
+                      <button id="competition-competitor-import-reset" class="ghost-button" type="button">Changer de fichier</button>
+                    </div>
+                  </div>
+                </section>
+                <div id="competition-wizard-competitors" class="lineup-list"></div>
+                <div class="competition-step-actions">
+                  <button class="ghost-button" type="button" data-create-nav="prev">Etape précédente</button>
+                  <button id="competition-wizard-finish" type="button">Terminer la création</button>
+                </div>
+              </section>
+            </div>
+
+            <form id="competition-edit-form" class="feature-card form-card competition-panel" data-competition-panel="edit">
+              <div class="section-head compact">
+                <div>
+                  <h3>Modifier une compétition</h3>
+                </div>
+              </div>
+              <label class="field-row"><span>Compétition</span><select id="competition-edit-select" name="competitionId" required></select></label>
+              <label class="field-row"><span>Titre</span><input id="competition-edit-name" name="name" placeholder="Ex. Championnat régional 2026" required></label>
+              <label class="field-row"><span>Lieu</span><input id="competition-edit-location" name="location" placeholder="Ex. Palais des sports de Lyon"></label>
+              <div class="competition-form-compact-grid">
+                <label class="field-row field-row-condensed"><span>Date</span><input id="competition-edit-date" name="eventDate" type="date"></label>
+                <label class="field-row field-row-condensed"><span>Saison</span><select id="competition-edit-season" name="season" required></select></label>
+                <label class="field-row field-row-condensed"><span>Nb juges</span><select id="competition-edit-judge-count" name="judgeCount" required></select></label>
+              </div>
+              <label class="field-row"><span>Niveau</span><select id="competition-edit-level" name="competitionLevel" required></select></label>
+              <label class="field-row competition-edit-regional-field" data-edit-regional-field="region" hidden><span>Région</span><select id="competition-edit-region" name="region"></select></label>
+              <label class="field-row competition-edit-regional-field" data-edit-regional-field="zone" hidden><span>Zone</span><input id="competition-edit-zone" name="zone" readonly></label>
+              <label class="field-row"><span>Statut</span>
+                <select id="competition-edit-status" name="status">
+                  <option value="draft">Brouillon</option>
+                  <option value="active">Active</option>
+                  <option value="closed">Clôturée</option>
+                </select>
+              </label>
+              <section class="mini-card competition-judge-selection-card competition-edit-judges-shell">
+                <div class="competition-judge-selection-head">
+                  <div>
+                    <strong>Attribution des juges</strong>
+                    <p>Ajustez les rôles, les juges et les lignes shadow pour cette compétition.</p>
+                  </div>
+                </div>
+                <div id="competition-edit-judges"></div>
+              </section>
+              <button type="submit">Enregistrer les modifications</button>
+            </form>
+
+            <form id="competition-delete-form" class="feature-card form-card competition-panel" data-competition-panel="delete">
+              <div class="section-head compact">
+                <div>
+                  <h3>Supprimer une compétition</h3>
+                </div>
+              </div>
+              <label class="field-row"><span>Compétition</span><select id="competition-delete-select" name="competitionId" required></select></label>
+              <div id="competition-delete-summary" class="mini-card competition-delete-summary"></div>
+              <label id="competition-delete-password-row" class="field-row" hidden><span>Mot de passe</span><input id="competition-delete-password" name="password" type="password" placeholder="Mot de passe scrutateur"></label>
+              <button type="submit" class="danger-button">Supprimer la compétition</button>
+            </form>
+          </div>
+
+          <div class="feature-card list-card competition-directory-card" data-competition-directory hidden>
+            <div class="section-head compact">
+              <div>
+                <h3>Liste des compétitions</h3>
+              </div>
+            </div>
+            <label class="field-row competition-filter-row"><span>Saison affichée</span><select id="competition-season-filter"></select></label>
+            <div id="competitions"></div>
+          </div>
+        </section>
+
+        <section class="view" id="view-judges" data-view="judges">
+          <div class="content-grid two-columns judges-grid">
+            <form id="judge-form" class="feature-card form-card" autocomplete="off">
+              <div>
+                <h3>Ajouter un juge</h3>
+              </div>
+              <label class="field-row"><span>Nom</span><input name="lastName" placeholder="Ex. Dupont" required></label>
+              <label class="field-row"><span>Prénom</span><input name="firstName" placeholder="Ex. Camille" required></label>
+              <label class="field-row"><span>Login</span><input name="login" placeholder="Ex. Camille.Dupont#1" autocapitalize="off" spellcheck="false" autocomplete="off" required></label>
+              <label class="field-row"><span>Mot de passe</span><input name="password" type="password" placeholder="Mot de passe du juge" autocomplete="new-password" required></label>
+              <button type="submit">Enregistrer le juge</button>
+            </form>
+
+            <form id="judge-delete-form" class="feature-card form-card">
+              <div>
+                <h3>Supprimer un juge</h3>
+              </div>
+              <label class="field-row"><span>Juge</span><select id="judge-delete-select" name="judgeId" required></select></label>
+              <button type="submit" class="danger-button">Supprimer de la base</button>
+            </form>
+
+            <div class="feature-card list-card judges-directory-card">
+              <div class="section-head compact">
+                <div>
+                  <h3>Liste des Juges enregistrés</h3>
+                </div>
+              </div>
+              <div id="judges"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="view-competitors" data-view="competitors">
+          <div class="content-grid two-columns competitors-management-grid">
+            <div class="feature-card competitors-import-notice" role="note" aria-label="Avertissement import officiel">
+              <h3>Chargement en base uniquement avec le document Excel "Inscriptions_v27.1"</h3>
+              <p>Pour garantir la compatibilité des colonnes et éviter les erreurs d'import, utilisez exclusivement le modèle officiel.</p>
+              <div class="competitors-import-notice-head">
+                <a class="inline-link ghost-button competitors-import-notice-download" href="/assets/import/Inscriptions_v27.1.xlsx" download>Télécharger le modèle</a>
+              </div>
+            </div>
+
+            <div class="feature-card form-card competitors-filter-card">
+              <div>
+                <h3>Choisir une compétition</h3>
+              </div>
+              <label class="field-row"><span>Compétition</span><select id="competitor-management-select" required></select></label>
+              <div id="competitor-management-summary" class="mini-card accent-card competitor-management-summary">
+                <strong>Aucune compétition sélectionnée</strong>
+                <p>Choisissez une compétition en brouillon ou active pour afficher sa liste de compétiteurs.</p>
+              </div>
+            </div>
+
+            <div class="feature-card form-card competitors-import-card" id="competitor-import-card">
+              <div>
+                <h3>Importer une liste</h3>
+              </div>
+              <p id="competitor-import-hint">L'import n'est disponible que pour une compétition en brouillon sans liste associée.</p>
+              <label class="field-row"><span>Fichier Excel</span><input id="competitor-import-file" type="file" accept=".xlsx,.xls"></label>
+              <p class="inline-help" id="competitor-import-sheet">Aucun fichier chargé.</p>
+              <div class="competition-import-config" id="competitor-import-config" hidden>
+                <p id="competitor-import-summary"></p>
+              </div>
+              <div class="competition-step-actions">
+                <button type="button" class="ghost-button" id="competitor-import-reset" disabled>Réinitialiser</button>
+                <button type="button" id="competitor-import-submit" disabled>Charger la liste</button>
+              </div>
+            </div>
+
+            <div class="feature-card list-card competitors-table-card">
+              <div class="section-head compact">
+                <div>
+                  <h3>Compétiteurs inscrits</h3>
+                </div>
+              </div>
+              <div id="competitors-table"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="view-conductor" data-view="conductor">
+          <div class="content-grid two-columns conductor-top-grid">
+            <div class="feature-card form-card">
+              <div>
+                <h3>Pilotage des passages</h3>
+              </div>
+              <p>Le conducteur suit la compétition active et prépare l'envoi des passages vers les tablettes scrutateurs.</p>
+              <div id="conductor-active-summary" class="mini-card accent-card cool-card">
+                <strong>Aucune compétition active</strong>
+                <p>Passez une compétition en statut Active pour afficher les catégories et leurs passages.</p>
+              </div>
+            </div>
+
+            <div class="feature-card form-card">
+              <div>
+                <h3>Progression globale</h3>
+              </div>
+              <div id="conductor-progress-summary" class="mini-card">
+                <strong id="conductor-progress-value">0 / 0</strong>
+                <p id="conductor-progress-current"></p>
+                <div class="conductor-progress-track" aria-hidden="true">
+                  <div id="conductor-progress-bar" class="conductor-progress-bar"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="feature-card form-card conductor-judge-presence-card">
+              <div class="conductor-judge-presence-head">
+                <h3>Connexion des juges tablette</h3>
+                <div class="conductor-judge-presence-controls">
+                  <label class="recap-shadow-toggle" for="conductor-include-shadow-tablets">
+                    <span>Affichage Shadows</span>
+                    <input id="conductor-include-shadow-tablets" type="checkbox">
+                    <span class="recap-shadow-slider"></span>
+                  </label>
+                  <span id="conductor-judge-presence-summary" aria-live="polite">--</span>
+                </div>
+              </div>
+              <div id="conductor-judge-presence-list" class="conductor-judge-presence-list">
+                <p class="dashboard-status-empty">Aucun juge à afficher.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="feature-card list-card conductor-passages-card">
+            <div>
+              <h3>Passages par catégorie</h3>
+            </div>
+            <div id="conductor-category-accordion"></div>
+          </div>
+        </section>
+
+        <section class="view" id="view-statistics" data-view="statistics">
+          <div class="content-grid two-columns statistics-grid">
+            <div class="feature-card form-card statistics-card statistics-tools-card">
+              <div>
+                <h3>Statistiques compétition active</h3>
+              </div>
+              <p>Ouvrez la vue détaillée des statistiques individuelles dans une fenêtre séparée.</p>
+              <div class="competition-step-actions statistics-results-actions">
+                <button type="button" id="statistics-open-individual" disabled>Statistiques individuelles</button>
+              </div>
+            </div>
+
+            <div class="feature-card form-card statistics-card">
+              <div>
+                <h3>Classements de la compétition active</h3>
+              </div>
+              <p>Ouvrez les résultats globaux dans une fenêtre séparée, avec une mise en page adaptée à l'impression.</p>
+              <div class="mini-card accent-card cool-card statistics-active-card">
+                <strong id="statistics-active-competition">Aucune compétition active</strong>
+                <p id="statistics-active-hint">Passez une compétition en statut Active pour ouvrir les résultats imprimables.</p>
+              </div>
+              <div class="competition-step-actions statistics-results-actions">
+                <button type="button" id="statistics-open-ranking" disabled>Classement complet</button>
+                <button type="button" id="statistics-open-podium" class="ghost-button" disabled>Podiums</button>
+              </div>
+            </div>
+
+            <div class="feature-card form-card statistics-card">
+              <div>
+                <h3>Résultats d'une autre compétition</h3>
+              </div>
+              <p id="statistics-other-hint">Choisissez une compétition pour ouvrir ses résultats dans une fenêtre séparée.</p>
+              <label class="field-row"><span>Compétition</span><select id="statistics-other-competition-select"></select></label>
+              <div class="competition-step-actions statistics-results-actions">
+                <button type="button" id="statistics-other-open-ranking" disabled>Classement complet</button>
+                <button type="button" id="statistics-other-open-podium" class="ghost-button" disabled>Podiums</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="view-settings" data-view="settings">
+          <div class="feature-card form-card settings-shell">
+            <div class="section-head compact">
+              <div>
+                <h3>Paramétrages techniques</h3>
+              </div>
+            </div>
+            <div class="mini-card settings-db-path-card">
+              <strong>Base active</strong>
+              <p id="settings-db-path">Chargement du chemin...</p>
+            </div>
+            <div id="settings-action-bar" class="competition-actions-bar settings-action-bar" role="tablist" aria-label="Actions paramétrages">
+              <button type="button" class="competition-mode-button" data-settings-action="access" aria-pressed="false">Accès</button>
+              <button type="button" class="competition-mode-button" data-settings-action="criteria" aria-pressed="false">Critères</button>
+              <button type="button" class="competition-mode-button" data-settings-action="archive" aria-pressed="false">Archivage</button>
+              <button type="button" id="settings-action-logout" class="ghost-button settings-action-logout">Se déconnecter</button>
+            </div>
+          </div>
+
+          <div id="settings-home" class="feature-card list-card settings-empty-card">
+            <div class="section-head compact">
+              <div>
+                <h3>Aucun sous-écran sélectionné</h3>
+              </div>
+            </div>
+            <p>Utilisez la barre d'actions ci-dessus pour afficher un panneau de configuration.</p>
+          </div>
+
+          <div id="settings-criteria-panel" class="feature-card list-card settings-criteria-card" hidden>
+            <div class="section-head compact">
+              <div>
+                <h3>Gestion des critères</h3>
+              </div>
+            </div>
+            <p class="settings-criteria-intro">Créez un nouveau critère ou modifiez un critère existant. Chaque changement génère automatiquement une nouvelle révision de grille.</p>
+
+            <div class="competition-form-compact-grid settings-criteria-controls">
+              <label class="field-row field-row-condensed"><span>Type grille</span><select id="settings-criteria-grid"></select></label>
+              <label class="field-row field-row-condensed"><span>Nouveau critère</span><input id="settings-criteria-new-label" placeholder="Ex. Présence scénique"></label>
+              <label class="field-row field-row-condensed"><span>Position</span><input id="settings-criteria-new-order" type="number" min="1" placeholder="Fin"></label>
+            </div>
+            <div class="competition-step-actions settings-criteria-create-row">
+              <button type="button" id="settings-criteria-create">Créer un critère (nouvelle révision)</button>
+            </div>
+
+            <div id="settings-criteria-table" class="settings-criteria-table"></div>
+          </div>
+
+          <div id="settings-access-panel" class="feature-card list-card settings-access-card" hidden>
+            <div class="section-head compact">
+              <div>
+                <h3>Gestion des accès</h3>
+              </div>
+              <button id="settings-access-refresh" class="ghost-button" type="button">Rafraîchir</button>
+            </div>
+
+            <div id="settings-access-action-bar" class="competition-actions-bar settings-access-action-bar" role="tablist" aria-label="Sous-actions accès">
+              <button type="button" class="competition-mode-button" data-access-panel-action="create" aria-pressed="false">Création</button>
+              <button type="button" class="competition-mode-button" data-access-panel-action="edit" aria-pressed="false">Modification</button>
+              <button type="button" class="competition-mode-button" data-access-panel-action="codes" aria-pressed="false">Codes</button>
+            </div>
+
+            <div id="settings-access-create-shell" class="settings-access-shell" hidden>
+              <form id="settings-access-form" class="settings-access-form">
+                <input type="hidden" id="settings-access-account-id">
+                <div class="competition-form-compact-grid settings-access-grid">
+                  <label class="field-row field-row-condensed"><span>Nom</span><input id="settings-access-first-name" autocomplete="off" required></label>
+                  <label class="field-row field-row-condensed"><span>Prénom</span><input id="settings-access-last-name" autocomplete="off" required></label>
+                  <label class="field-row field-row-condensed"><span>Login</span><input id="settings-access-login" autocomplete="off" required></label>
+                  <label class="field-row field-row-condensed"><span>Mot de passe</span><input id="settings-access-password" type="password" autocomplete="new-password" placeholder="Laisser vide pour conserver"></label>
+                  <label class="field-row field-row-condensed"><span>Rôle</span>
+                    <select id="settings-access-role">
+                      <option value="super_admin">Admin</option>
+                      <option value="admin">Scrutateur</option>
+                      <option value="presenter">Présentateur</option>
+                    </select>
+                  </label>
+                  <label class="field-row field-row-condensed"><span>Actif</span>
+                    <select id="settings-access-active">
+                      <option value="true">Oui</option>
+                      <option value="false">Non</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="competition-step-actions settings-access-actions">
+                  <button id="settings-access-save" type="submit">Créer le compte</button>
+                  <button id="settings-access-reset" class="ghost-button" type="button">Nouveau compte</button>
+                </div>
+              </form>
+            </div>
+
+            <div id="settings-access-edit-shell" class="settings-access-shell" hidden>
+              <div id="settings-access-table" class="settings-access-table"></div>
+            </div>
+
+            <div id="settings-access-codes-shell" class="settings-access-shell" hidden>
+              <div class="mini-card settings-access-recovery-card">
+                <div class="section-head compact">
+                  <div>
+                    <h3>Codes de récupération</h3>
+                  </div>
+                </div>
+                <p>Les codes sont à usage unique. Générez-les puis transmettez-les de manière sécurisée au scrutateur concerné.</p>
+                <div id="settings-access-recovery-output" class="settings-access-recovery-output"></div>
+              </div>
+              <div id="settings-access-codes-table" class="settings-access-table"></div>
+            </div>
+          </div>
+
+          <div id="settings-archive-panel" class="feature-card form-card settings-archive-card" hidden>
+            <div class="section-head compact">
+              <div>
+                <h3>Archivage des saisons</h3>
+              </div>
+            </div>
+            <p>Créez une archive des saisons anciennes puis appliquez éventuellement une purge sur la base active.</p>
+            <div class="mini-card accent-card cool-card">
+              <strong>Information</strong>
+              <p>Par défaut, les 3 dernières saisons sont conservées sur le poste actif.</p>
+            </div>
+            <div class="competition-step-actions">
+              <label class="field-row field-row-condensed" for="archive-keep-seasons"><span>Saisons à conserver</span>
+                <select id="archive-keep-seasons">
+                  <option value="2">2 saisons</option>
+                  <option value="3" selected>3 saisons</option>
+                  <option value="4">4 saisons</option>
+                  <option value="5">5 saisons</option>
+                  <option value="6">6 saisons</option>
+                </select>
+              </label>
+              <button id="archive-db" type="button">Archivage</button>
+            </div>
+
+            <div class="settings-archive-restore-row">
+              <label class="field-row field-row-condensed" for="archive-restore-select">
+                <span>Archives disponibles</span>
+                <select id="archive-restore-select">
+                  <option value="">— Charger la liste —</option>
+                </select>
+              </label>
+              <div class="settings-archive-restore-actions">
+                <button id="archive-restore-refresh" class="ghost-button" type="button" title="Actualiser la liste">↺</button>
+                <button id="archive-restore-download" class="ghost-button" type="button" disabled>Télécharger</button>
+                <button id="archive-restore-db" type="button" disabled>Réintégrer l'archive</button>
+              </div>
+            </div>
+            <pre id="settings-archive-result"></pre>
+          </div>
+        </section>
+
+        <section class="view" id="view-sync" data-view="sync">
+          <div class="content-grid two-columns">
+            <div class="feature-card form-card">
+              <div class="section-head compact">
+                <div>
+                  <h3>Sauvegarde de la base</h3>
+                </div>
+              </div>
+              <p>Créez une sauvegarde complète SQLite de la base locale (format recommandé pour une restauration ISO).</p>
+              <div class="mini-card accent-card cool-card">
+                <strong>Astuce</strong>
+                <p>Conservez une copie par date dans un dossier de sauvegarde dédié.</p>
+              </div>
+              <div class="competition-step-actions">
+                <button id="export-db" type="button">Exporter la base SQLite</button>
+              </div>
+            </div>
+
+            <div class="feature-card form-card">
+              <div class="section-head compact">
+                <div>
+                  <h3>Import d'une base</h3>
+                </div>
+              </div>
+              <p>Importez un fichier SQLite pour remplacer la base locale actuelle.</p>
+              <div class="mini-card accent-card cool-card">
+                <strong>Attention</strong>
+                <p>L'import remplace l'état courant du poste. Vérifiez le fichier avant confirmation.</p>
+              </div>
+              <div class="competition-step-actions">
+                <button id="import-db" type="button">Importer une base SQLite</button>
+              </div>
+            </div>
+
+            <div class="feature-card list-card sync-rules-card">
+              <div>
+                <h3>Règles de gestion</h3>
+              </div>
+              <ul class="explain-list">
+                <li>La sauvegarde SQLite contient l'ensemble des tables (compétitions, juges, notes, accès, grilles...).</li>
+                <li>L'import restaure un état complet de base sur le poste local.</li>
+                
+              </ul>
+              <div class="mini-card accent-card cool-card">
+                <strong>Réseau local</strong>
+                <p>Le filtrage MAC reste géré par le routeur dédié. L'interface met en avant les adresses LAN disponibles pour les tablettes.</p>
+              </div>
+              <pre id="sync-result"></pre>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div id="app-confirm-dialog" class="app-confirm-dialog" hidden>
+      <div class="app-confirm-dialog__card" role="alertdialog" aria-modal="true" aria-labelledby="app-confirm-dialog-title" aria-describedby="app-confirm-dialog-message">
+        <p class="eyebrow app-confirm-dialog__eyebrow">Confirmation</p>
+        <h3 id="app-confirm-dialog-title">Confirmer la suppression</h3>
+        <p id="app-confirm-dialog-message"></p>
+        <div class="app-confirm-dialog__actions">
+          <button id="app-confirm-dialog-cancel" class="ghost-button" type="button">Annuler</button>
+          <button id="app-confirm-dialog-confirm" class="danger-button" type="button">Supprimer</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="app-input-dialog" class="app-input-dialog" hidden>
+      <form id="app-input-dialog-form" class="app-input-dialog__card" role="dialog" aria-modal="true" aria-labelledby="app-input-dialog-title" aria-describedby="app-input-dialog-message">
+        <p class="eyebrow app-input-dialog__eyebrow">Édition</p>
+        <h3 id="app-input-dialog-title">Modifier un critère</h3>
+        <p id="app-input-dialog-message"></p>
+        <label class="app-input-dialog__field" for="app-input-dialog-value">
+          <span>Libellé</span>
+          <input id="app-input-dialog-value" type="text" autocomplete="off" required>
+        </label>
+        <div class="app-input-dialog__actions">
+          <button id="app-input-dialog-cancel" class="ghost-button" type="button">Annuler</button>
+          <button id="app-input-dialog-confirm" type="submit">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+
+    <div id="app-access-dialog" class="app-access-dialog" hidden>
+      <form id="app-access-dialog-form" class="app-access-dialog__card" role="dialog" aria-modal="true" aria-labelledby="app-access-dialog-title" aria-describedby="app-access-dialog-message">
+        <p class="eyebrow app-access-dialog__eyebrow">Accès sécurisé</p>
+        <h3 id="app-access-dialog-title">Se connecter aux paramétrages</h3>
+        <p id="app-access-dialog-message">Identifiez-vous avec votre login et votre mot de passe.</p>
+        <div class="app-access-dialog__bootstrap-fields" hidden>
+          <label class="app-access-dialog__field"><span>Nom</span><input id="app-access-dialog-first-name" type="text" autocomplete="off"></label>
+          <label class="app-access-dialog__field"><span>Prénom</span><input id="app-access-dialog-last-name" type="text" autocomplete="off"></label>
+        </div>
+        <label class="app-access-dialog__field"><span>Login</span><input id="app-access-dialog-login" type="text" autocomplete="username" required></label>
+        <label class="app-access-dialog__field"><span>Mot de passe</span><input id="app-access-dialog-password" type="password" autocomplete="current-password" required></label>
+        <button id="app-access-dialog-forgot" class="link-button" type="button">Mot de passe oublié ?</button>
+        <div class="app-access-dialog__actions">
+          <button id="app-access-dialog-cancel" class="ghost-button" type="button">Annuler</button>
+          <button id="app-access-dialog-confirm" type="submit">Se connecter</button>
+        </div>
+      </form>
+    </div>
+
+    <div id="app-access-recovery-dialog" class="app-access-dialog" hidden>
+      <form id="app-access-recovery-dialog-form" class="app-access-dialog__card" role="dialog" aria-modal="true" aria-labelledby="app-access-recovery-dialog-title" aria-describedby="app-access-recovery-dialog-message">
+        <p class="eyebrow app-access-dialog__eyebrow">Récupération</p>
+        <h3 id="app-access-recovery-dialog-title">Connexion par code de récupération</h3>
+        <p id="app-access-recovery-dialog-message">Entrez votre login et un code à usage unique. Un mot de passe temporaire sera appliqué, puis vous devrez définir immédiatement votre nouveau mot de passe.</p>
+        <label class="app-access-dialog__field"><span>Login</span><input id="app-access-recovery-login" type="text" autocomplete="username" required></label>
+        <label class="app-access-dialog__field"><span>Code de récupération</span><input id="app-access-recovery-code" type="text" autocomplete="off" placeholder="Ex. AB12-CD34" required></label>
+        <div class="app-access-dialog__actions">
+          <button id="app-access-recovery-cancel" class="ghost-button" type="button">Annuler</button>
+          <button id="app-access-recovery-confirm" type="submit">Utiliser le code</button>
+        </div>
+      </form>
+    </div>
+
+    <div id="app-access-force-password-dialog" class="app-access-dialog" hidden>
+      <form id="app-access-force-password-dialog-form" class="app-access-dialog__card" role="dialog" aria-modal="true" aria-labelledby="app-access-force-password-dialog-title" aria-describedby="app-access-force-password-dialog-message">
+        <p class="eyebrow app-access-dialog__eyebrow">Sécurité</p>
+        <h3 id="app-access-force-password-dialog-title">Définir un nouveau mot de passe</h3>
+        <p id="app-access-force-password-dialog-message">Cette session utilise un mot de passe temporaire. Choisissez un nouveau mot de passe pour finaliser la connexion.</p>
+        <label class="app-access-dialog__field"><span>Nouveau mot de passe</span>
+          <div class="app-password-field-control">
+            <input id="app-access-force-password" type="password" autocomplete="new-password" required>
+            <button id="app-access-force-password-toggle" class="ghost-button app-password-toggle" type="button" aria-label="Afficher le mot de passe">Afficher</button>
+          </div>
+        </label>
+        <label class="app-access-dialog__field"><span>Confirmation</span><input id="app-access-force-password-confirm" type="password" autocomplete="new-password" required></label>
+        <div class="app-access-dialog__actions">
+          <button id="app-access-force-password-confirm-button" type="submit">Mettre à jour</button>
+        </div>
+      </form>
+    </div>
+
+    <div id="app-judge-edit-dialog" class="app-access-dialog" hidden>
+      <form id="app-judge-edit-dialog-form" class="app-access-dialog__card" role="dialog" aria-modal="true" aria-labelledby="app-judge-edit-dialog-title" aria-describedby="app-judge-edit-dialog-message">
+        <p class="eyebrow app-access-dialog__eyebrow">Base commune</p>
+        <h3 id="app-judge-edit-dialog-title">Modifier un juge</h3>
+        <p id="app-judge-edit-dialog-message">Mettez à jour les informations du juge. Laissez le mot de passe vide pour le conserver.</p>
+        <input id="app-judge-edit-dialog-id" type="hidden">
+        <label class="app-access-dialog__field"><span>Nom</span><input id="app-judge-edit-last-name" type="text" autocomplete="off" required></label>
+        <label class="app-access-dialog__field"><span>Prénom</span><input id="app-judge-edit-first-name" type="text" autocomplete="off" required></label>
+        <label class="app-access-dialog__field"><span>Login</span><input id="app-judge-edit-login" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" required></label>
+        <label class="app-access-dialog__field"><span>Mot de passe</span><input id="app-judge-edit-password" type="password" autocomplete="new-password" placeholder="********"></label>
+        <div class="app-access-dialog__actions">
+          <button id="app-judge-edit-dialog-cancel" class="ghost-button" type="button">Annuler</button>
+          <button id="app-judge-edit-dialog-confirm" type="submit">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+
+    <div id="app-toast" class="app-toast" aria-live="polite" aria-atomic="true"></div>
+
+    <script src="/vendor/xlsx.full.min.js"></script>
+    <script type="module" src="/app.js"></script>
+  </body>
+  </html>

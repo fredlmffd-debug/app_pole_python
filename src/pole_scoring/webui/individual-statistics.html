@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pole Scoring - Statistiques individuelles</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/individual-statistics.css">
+  </head>
+  <body class="manual-scoring-body individual-stats-body">
+    <main class="individual-stats-shell">
+      <header class="individual-stats-toolbar" id="individual-stats-toolbar">
+        <div>
+          <h1>Statistiques individuelles</h1>
+          <p id="individual-stats-subtitle">Chargement...</p>
+        </div>
+        <div class="individual-stats-toolbar-actions">
+          <label class="field-row individual-stats-select-row">
+            <span>Candidat</span>
+            <select id="individual-stats-competitor-select"></select>
+          </label>
+          <label class="individual-stats-toggle-row" for="individual-stats-hide-shadow-comments">
+            <input id="individual-stats-hide-shadow-comments" type="checkbox">
+            <span>Masquer les commentaires Shadow</span>
+          </label>
+          <button id="individual-stats-print-current" type="button">Exporter vers PDF</button>
+          <button id="individual-stats-print-all" type="button" class="ghost-button">Exporter TOUS vers PDF</button>
+          <button id="individual-stats-open-export-folder" type="button" class="ghost-button">Ouvrir dossier exports</button>
+          <button id="individual-stats-close" type="button" class="ghost-button">Fermer</button>
+        </div>
+      </header>
+
+      <section id="individual-stats-error" class="manual-scoring-error" hidden></section>
+      <section id="individual-stats-content" class="individual-stats-content" hidden></section>
+    </main>
+
+    <script type="module" src="/individual-statistics.js"></script>
+  </body>
+</html>

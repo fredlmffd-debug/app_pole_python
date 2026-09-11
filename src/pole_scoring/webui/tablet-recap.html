@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pole Scoring - Recap tablette</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="shell recap-shell">
+      <section class="hero compact recap-hero feature-card spotlight-card">
+        <h1 id="recap-title">Passage en cours</h1>
+        <p id="recap-subtitle" class="recap-subtitle"></p>
+      </section>
+
+      <section class="card form-card recap-card">
+        <div id="recap-status" class="recap-status">Chargement des notes en cours...</div>
+        <div class="recap-actions">
+          <label class="recap-shadow-toggle">
+            <span>Affichage Shadows</span>
+            <input id="recap-shadow-toggle-input" type="checkbox">
+            <span class="recap-shadow-slider"></span>
+          </label>
+          <button id="recap-finalize" type="button">Valider</button>
+        </div>
+        <div id="recap-root" class="recap-root"></div>
+      </section>
+    </main>
+
+    <script type="module" src="/tablet-recap.js?v=20260702-live"></script>
+  </body>
+</html>

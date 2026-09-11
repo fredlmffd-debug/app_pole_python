@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pole Scoring - Saisie juge</title>
+    <link rel="stylesheet" href="/styles.css?v=20260706-head-penalties-list">
+  </head>
+  <body>
+    <main class="shell judge-shell">
+      <section class="hero compact judge-hero feature-card spotlight-card judge-spotlight">
+        <div class="judge-brand-row">
+          <div class="brand-mark judge-mark" aria-hidden="true">
+            <img src="/assets/img/Picto_PD.png" alt="">
+          </div>
+          <div class="judge-hero-title">
+            <h1 class="judge-competition-inline">
+              <span id="judge-competition-title">POLE DANCE - JUGEMENT PAR TABLETTE</span>
+              <span id="judge-competition-location" class="judge-competition-location"></span>
+            </h1>
+            <p id="judge-connected-name" class="judge-connected-name">Non connecté</p>
+            <p class="judge-sector-line">
+              <span id="judge-sector-badge" class="judge-sector-badge is-neutral">Secteur non défini</span>
+            </p>
+          </div>
+          <button id="judge-logout" class="ghost-button judge-logout-button" type="button" hidden>Déconnexion</button>
+        </div>
+      </section>
+
+      <form id="judge-auth-form" class="card form-card judge-identity-shell" novalidate autocomplete="off">
+        <div id="judge-identity-status" class="judge-status-card pending">
+          <strong>Identification requise</strong>
+          <p>Saisissez vos identifiants pour vérifier votre habilitation sur la compétition en cours.</p>
+        </div>
+        <label class="field-row"><span>Compétition</span><select id="judge-competition" name="competitionId" required></select></label>
+        <div class="judge-auth-inline">
+          <label class="field-row judge-auth-field"><span>Login</span><input id="judge-login" name="judgeLoginInput" placeholder="Votre login juge" autocomplete="off" autocapitalize="off" spellcheck="false" required></label>
+          <label class="field-row judge-auth-field"><span>Mot de passe</span><input id="judge-password" name="judgePasswordInput" type="password" placeholder="Votre mot de passe" autocomplete="new-password" autocapitalize="off" spellcheck="false" required></label>
+        </div>
+        <button class="judge-auth-submit" type="submit">Se connecter</button>
+      </form>
+
+      <section id="judge-waiting-card" class="card form-card judge-waiting-card" hidden>
+        <div class="pl" aria-hidden="true">
+          <div class="pl__dot"></div>
+          <div class="pl__dot"></div>
+          <div class="pl__dot"></div>
+          <div class="pl__dot"></div>
+          <div class="pl__dot"></div>
+          <div class="pl__dot"></div>
+          <div class="pl__dot"></div>
+          <div class="pl__dot"></div>
+          <div class="pl__dot"></div>
+          <div class="pl__dot"></div>
+          <div class="pl__dot"></div>
+          <div class="pl__dot"></div>
+          <div class="pl__text">En attente de jugement</div>
+        </div>
+      </section>
+
+      <form id="score-form" class="card form-card judge-form-shell" hidden>
+        <section class="judge-active-passage-card">
+          <p id="judge-active-passage" class="judge-active-passage">Passage en attente</p>
+          <p id="judge-active-category" class="judge-active-category"></p>
+        </section>
+        <div class="judge-scoring-layout">
+          <div class="judge-score-main">
+            <input id="judge-competitor-id" name="competitorId" type="hidden">
+            <input id="judge-id-hidden" name="judgeId" type="hidden">
+            <input id="competition-id-hidden" name="competitionId" type="hidden">
+            <div class="judge-score-tabs" role="tablist" aria-label="Navigation de saisie">
+              <button id="judge-tab-button-notation" class="judge-score-tab is-active" type="button" role="tab" aria-controls="judge-tab-panel-notation" aria-selected="true" data-judge-tab="notation">Notation</button>
+              <button id="judge-tab-button-secondary" class="judge-score-tab" type="button" role="tab" aria-controls="judge-tab-panel-secondary" aria-selected="false" data-judge-tab="secondary">Commentaires</button>
+              <button id="judge-tab-button-history" class="judge-score-tab" type="button" role="tab" aria-controls="judge-tab-panel-history" aria-selected="false" data-judge-tab="history">Historique</button>
+            </div>
+            <section id="judge-tab-panel-notation" class="judge-tab-panel" role="tabpanel" aria-labelledby="judge-tab-button-notation">
+              <div id="judge-score-grid" class="judge-score-grid"></div>
+              <p id="judge-score-total" class="judge-score-total">Total: 0,00</p>
+            </section>
+            <section id="judge-tab-panel-secondary" class="judge-tab-panel" role="tabpanel" aria-labelledby="judge-tab-button-secondary" hidden>
+              <div id="judge-secondary-content" class="judge-secondary-content"></div>
+            </section>
+            <section id="judge-tab-panel-history" class="judge-tab-panel" role="tabpanel" aria-labelledby="judge-tab-button-history" hidden>
+              <section class="judge-history-card">
+                <header>
+                  <h3>Notes précédentes (même catégorie)</h3>
+                  <p id="judge-history-subtitle"></p>
+                </header>
+                <div id="judge-history-list" class="judge-history-list"></div>
+              </section>
+            </section>
+            <div class="judge-score-actions">
+              <button id="judge-submit-scorecard" type="submit">Valider</button>
+            </div>
+            <pre id="score-result"></pre>
+          </div>
+        </div>
+      </form>
+    </main>
+
+    <script type="module" src="/judge.js?v=20260706-head-penalties-list"></script>
+
+    <div id="judge-alert-dialog" class="app-confirm-dialog" hidden>
+      <div class="app-confirm-dialog__card" role="dialog" aria-modal="true" aria-labelledby="judge-alert-title" aria-describedby="judge-alert-message">
+        <p class="eyebrow app-confirm-dialog__eyebrow">Avertissement</p>
+        <h3 id="judge-alert-title">Information</h3>
+        <p id="judge-alert-message"></p>
+        <div class="app-confirm-dialog__actions">
+          <button id="judge-alert-ok" type="button">OK</button>
+        </div>
+      </div>
+    </div>
+  </body>
+  </html>

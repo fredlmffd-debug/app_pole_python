@@ -1,0 +1,57 @@
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  .competition-results-shell {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  .competition-results-toolbar,
+  #competition-results-error,
+  #competition-results-print,
+  #competition-results-close {
+    display: none !important;
+  }
+
+  .competition-results-content {
+    gap: 3mm;
+  }
+
+  .competition-results-category {
+    border: 0.3mm solid rgba(40, 40, 40, 0.4);
+    border-radius: 2mm;
+    box-shadow: none;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .competition-results-row {
+    grid-template-columns: 14mm minmax(52mm, 1fr) 18mm 18mm 18mm;
+    gap: 1.2mm;
+    font-size: 0.82rem;
+  }
+
+  .competition-results-head {
+    font-size: 0.58rem;
+    letter-spacing: 0.01em;
+  }
+
+  .competition-results-head > span {
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .competition-results-head > span:nth-child(2) {
+    text-align: left;
+  }
+
+  .competition-results-row > span:nth-child(3),
+  .competition-results-row > span:nth-child(4),
+  .competition-results-row > span:nth-child(5) {
+    text-align: center;
+  }
+}

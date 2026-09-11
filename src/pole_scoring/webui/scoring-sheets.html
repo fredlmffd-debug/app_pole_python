@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pole Scoring - Scoring-sheets</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body class="manual-scoring-body scoring-sheets-body">
+    <main class="scoring-sheets-shell">
+      <header class="scoring-sheets-toolbar" id="scoring-sheets-toolbar">
+        <div>
+          <h1>Scoring-sheets</h1>
+          <p id="scoring-sheets-subtitle">Préparation des feuilles de jugement...</p>
+        </div>
+        <div class="scoring-sheets-toolbar-actions">
+          <button id="scoring-sheets-print" type="button" class="manual-submit-button">Exporter PDF</button>
+          <button id="scoring-sheets-open-export-folder" type="button" class="ghost-button">Ouvrir dossier exports</button>
+          <button id="scoring-sheets-close" type="button" class="ghost-button">Fermer</button>
+        </div>
+      </header>
+
+      <section id="scoring-sheets-error" class="manual-scoring-error" hidden></section>
+      <section id="scoring-sheets-pages" class="scoring-sheets-pages" hidden></section>
+    </main>
+
+    <script type="module" src="/scoring-sheets.js"></script>
+  </body>
+</html>

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pole Scoring - Présentateur</title>
+    <link rel="stylesheet" href="/styles.css?v=20260709-presenter-card-scroll">
+  </head>
+  <body>
+    <main class="presenter-shell">
+      <header class="presenter-header">
+        <div class="presenter-brand">
+          <div class="brand-mark presenter-mark" aria-hidden="true">
+            <img src="/assets/img/Pole-scoring.png" alt="">
+          </div>
+          <div class="presenter-brand-copy">
+            <h1 id="presenter-competition-title">Compétition active</h1>
+            <p id="presenter-competition-location"></p>
+          </div>
+        </div>
+        <a id="presenter-results-link" class="inline-link presenter-results-link" href="/competition-results.html" hidden>Résultats</a>
+      </header>
+
+      <section class="presenter-main">
+        <article class="presenter-stage" id="presenter-stage"></article>
+      </section>
+    </main>
+
+    <script type="module" src="/presenter.js?v=20260713-results-waiting"></script>
+  </body>
+  </html>

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pole Scoring - Classement catégorie</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body class="manual-scoring-body category-results-body">
+    <main class="manual-scoring-shell category-results-shell">
+      <header class="manual-scoring-header category-results-header">
+        <div>
+          <h1>Classement de catégorie</h1>
+          <p class="manual-scoring-subtitle">
+            <span id="category-results-competition">Chargement de la compétition...</span>
+            <span id="category-results-category" class="manual-candidate-category"></span>
+          </p>
+        </div>
+      </header>
+
+      <section id="category-results-error" class="manual-scoring-error" hidden></section>
+
+      <section id="category-results-content" class="category-results-content" hidden>
+        <div class="category-results-table-wrap">
+          <div class="category-results-table" role="table" aria-label="Classement de la catégorie">
+            <div class="category-results-row category-results-head" role="row">
+              <span role="columnheader">Rang</span>
+              <span role="columnheader">Candidat</span>
+              <span role="columnheader">Globale</span>
+              <span role="columnheader">Technique</span>
+              <span role="columnheader">Artistique</span>
+            </div>
+            <div id="category-results-rows" role="rowgroup"></div>
+          </div>
+        </div>
+
+        <footer class="manual-form-actions">
+          <button id="category-results-close-button" type="button" class="ghost-button">Fermer la fenêtre</button>
+        </footer>
+      </section>
+    </main>
+
+    <script type="module" src="/category-results.js"></script>
+  </body>
+</html>

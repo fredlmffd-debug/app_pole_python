@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pole Scoring - Saisie manuelle</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body class="manual-scoring-body">
+    <main class="manual-scoring-shell">
+      <header class="manual-scoring-header">
+        <div>
+          <h1>Saisie manuelle</h1>
+          <p class="manual-scoring-subtitle">
+            <span id="manual-candidate-name">Chargement du candidat...</span>
+            <span id="manual-candidate-category" class="manual-candidate-category"></span>
+          </p>
+        </div>
+      </header>
+
+      <section id="manual-scoring-error" class="manual-scoring-error" hidden></section>
+
+      <form id="manual-scoring-form" class="manual-scoring-form" hidden>
+        <p class="manual-score-warning">Les notes des juges doivent etre entre 0 et 5 (avec demi-points possibles)</p>
+
+        <div id="manual-main-judges"></div>
+        <div id="manual-shadow-judges"></div>
+
+        <footer class="manual-form-actions">
+          <button type="submit" class="manual-submit-button">Valider</button>
+          <button type="reset" class="manual-reset-button">RAZ Formulaire</button>
+          <button id="manual-close-button" type="button" class="ghost-button">Fermer le formulaire</button>
+        </footer>
+
+        <p id="manual-form-feedback" class="manual-form-feedback" role="status" aria-live="polite"></p>
+      </form>
+    </main>
+
+    <script type="module" src="/manual-scoring.js"></script>
+  </body>
+</html>

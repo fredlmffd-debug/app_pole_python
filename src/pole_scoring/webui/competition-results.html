@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pole Scoring - Résultats compétition</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/competition-results.css">
+  </head>
+  <body class="manual-scoring-body competition-results-body">
+    <main class="manual-scoring-shell competition-results-shell">
+      <header class="manual-scoring-header competition-results-toolbar">
+        <div>
+          <h1 id="competition-results-title">Résultats de compétition</h1>
+          <p class="manual-scoring-subtitle" id="competition-results-subtitle">Chargement...</p>
+        </div>
+        <div class="competition-results-actions">
+          <button id="competition-results-print" type="button">Exporter PDF</button>
+          <button id="competition-results-open-export-folder" type="button" class="ghost-button">Ouvrir dossier exports</button>
+          <button id="competition-results-close" type="button" class="ghost-button">Fermer la fenêtre</button>
+        </div>
+      </header>
+
+      <section id="competition-results-error" class="manual-scoring-error" hidden></section>
+
+      <section id="competition-results-content" class="competition-results-content" hidden></section>
+    </main>
+
+    <script type="module" src="/competition-results.js"></script>
+  </body>
+</html>

@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pole-scoring"
+version = "0.1.0"
+description = "Application locale de scrutation pour competitions de pole dance (portage desktop Python)"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pywebview>=5.2",
+    "platformdirs>=4.2",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.briefcase]
+project_name = "Pole Scoring"
+bundle = "fr.polescoring"
+version = "0.1.0"
+author = "Pole Scoring"
+author_email = "fredlm.ffd@gmail.com"
+
+[tool.briefcase.app.pole_scoring]
+formal_name = "Pole Scoring"
+description = "Application locale de scrutation pour competitions de pole dance"
+long_description = "Portage desktop Python de l'application de scrutation Pole Scoring (poste scrutateur + tablettes juges sur reseau local)."
+sources = ["src/pole_scoring"]
+requires = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pywebview>=5.2",
+    "platformdirs>=4.2",
+]
+icon = "resources/pole-scoring"
+
+[tool.briefcase.app.pole_scoring.windows]
+requires = []
+
+[tool.briefcase.app.pole_scoring.macOS]
+requires = ["pywebview[cocoa]>=5.2"]
