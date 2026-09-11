@@ -48,13 +48,25 @@ $env:POLE_SCORING_DATA_DIR = "$PWD\data"
 .venv\Scripts\python -m pole_scoring
 ```
 
+## Tests
+
+```powershell
+.venv\Scripts\pip install -e ".[dev]"
+.venv\Scripts\python -m pytest -q
+```
+
+`tests/test_reference_db.py` valide le portage sur une **copie isolée** (backup API SQLite,
+lecture seule) de la vraie base `app_pole/data/pole-scoring.sqlite` — jamais le fichier
+utilisé par l'application Node en cours d'exécution. Chemin surchargeable via la variable
+`POLE_SCORING_REFERENCE_DB`.
+
 ## État de la migration
 
 Migration menée phase par phase, chaque phase étant testée avant de passer à la
 suivante (voir l'échange initial de conception pour le détail complet).
 
 - [x] Phase 0 — scaffolding : fenêtre native + `/api/health` + frontend servi tel quel
-- [ ] Phase 1 — couche base de données (schéma, hashing, journal d'événements)
+- [x] Phase 1 — couche base de données (schéma, hashing, journal d'événements)
 - [ ] Phase 2 — comptes/accès, compétitions, compétiteurs, juges (CRUD)
 - [ ] Phase 3 — moteur de notation (grilles/critères versionnés, scores, saisie manuelle)
 - [ ] Phase 4 — présentateur, résultats, statistiques
