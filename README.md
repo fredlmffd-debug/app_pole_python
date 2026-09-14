@@ -67,9 +67,28 @@ suivante (voir l'échange initial de conception pour le détail complet).
 
 - [x] Phase 0 — scaffolding : fenêtre native + `/api/health` + frontend servi tel quel
 - [x] Phase 1 — couche base de données (schéma, hashing, journal d'événements)
-- [ ] Phase 2 — comptes/accès, compétitions, compétiteurs, juges (CRUD)
+- [x] Phase 2 — comptes/accès, compétitions, compétiteurs, juges (CRUD)
 - [ ] Phase 3 — moteur de notation (grilles/critères versionnés, scores, saisie manuelle)
 - [ ] Phase 4 — présentateur, résultats, statistiques
 - [ ] Phase 5 — PDF, exports/archives, synchronisation inter-poste
 - [ ] Phase 6 — packaging Briefcase (Windows + macOS)
 - [ ] Phase 7 — marche en parallèle, bascule finale
+
+### Détail Phase 2
+
+Portés : comptes d'accès (bootstrap, login, mot de passe, codes de récupération,
+CRUD des comptes réservé aux super-admins), compétitions (CRUD, unicité nom+date,
+une seule compétition active à la fois), compétiteurs (CRUD, résolution/déduplication
+des athlètes en duo via `athletes`/`competitor_members`), juges (CRUD, activation).
+Un sous-ensemble minimal du moteur de grilles de notation (`services/scoring_grids.py`)
+a été porté en avance de phase car `create_competition` en dépend (attribution d'une
+version active de grille par défaut) ; le CRUD complet des grilles/critères reste en
+Phase 3.
+
+Volontairement laissés pour la Phase 3, car couplés aux grilles de notation et aux
+assignations juges : `/api/judge-login` (`getJudgeAccessState`), les assignations
+juges par compétition, `refreshAllCompetitorScoreSummaries`, les migrations
+historiques de libellés/clés de critères (`migrateScoringCriterionLabels/Keys`,
+sans effet sur une base déjà à jour) et la réinitialisation du présentateur au
+démarrage (`clearPresenterActivePassage`, Phase 4). Le nettoyage des PDF à la
+clôture d'une compétition (`exportsCleanup`) est un stub en attendant la Phase 5.

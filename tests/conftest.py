@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from pole_scoring.db.bootstrap import run_startup_tasks
 from pole_scoring.db.connection import Database
 
 
@@ -14,6 +15,15 @@ def db(tmp_path) -> Database:
     database = Database(tmp_path / "pole-scoring.sqlite")
     yield database
     database.close()
+
+
+@pytest.fixture
+def bootstrapped_db(db) -> Database:
+    """Base fraiche avec les taches de demarrage appliquees (grilles de
+    notation par defaut, etc.) : necessaire pour les tests qui creent une
+    competition, comme le ferait l'application au premier lancement."""
+    run_startup_tasks(db)
+    return db
 
 
 def _default_reference_db_path() -> Path:
@@ -39,3 +49,11 @@ def reference_db_copy(tmp_path) -> Path:
     source_connection.close()
 
     return destination_path
+
+
+@pytest.fixture
+def reference_db(reference_db_copy) -> Database:
+    database = Database(reference_db_copy)
+    run_startup_tasks(database)
+    yield database
+    database.close()

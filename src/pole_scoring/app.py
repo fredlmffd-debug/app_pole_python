@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+
+from .api import access, competitions, judges
+from .db.connection import get_db
+from .services.system import get_lan_urls, get_summary
 
 WEBUI_DIR = Path(__file__).resolve().parent / "webui"
 
@@ -11,13 +17,26 @@ WEBUI_DIR = Path(__file__).resolve().parent / "webui"
 def create_app() -> FastAPI:
     app = FastAPI()
 
+    @app.exception_handler(ValueError)
+    async def value_error_handler(_request: Request, exc: ValueError) -> JSONResponse:
+        return JSONResponse(status_code=400, content={"error": str(exc) or "Erreur inconnue"})
+
+    @app.exception_handler(json.JSONDecodeError)
+    async def json_error_handler(_request: Request, _exc: json.JSONDecodeError) -> JSONResponse:
+        return JSONResponse(status_code=400, content={"error": "JSON invalide"})
+
     @app.get("/api/health")
     def health() -> dict:
-        return {"status": "ok"}
+        db = get_db()
+        return {"status": "ok", **get_summary(db), "lanUrls": get_lan_urls()}
 
-    # Les routeurs metier (competitions, juges, scores, presenter, pdf, sync, ...)
-    # seront inclus ici via app.include_router(...) au fil des phases suivantes,
-    # avant le montage statique ci-dessous qui doit rester en dernier.
+    app.include_router(access.router)
+    app.include_router(competitions.router)
+    app.include_router(judges.router)
+
+    # Les routeurs restants (scores, presenter, pdf, sync, db admin, ...) seront
+    # inclus ici au fil des phases suivantes, avant le montage statique ci-dessous
+    # qui doit rester en dernier (fallback fichiers + index.html).
     app.mount("/", StaticFiles(directory=WEBUI_DIR, html=True), name="webui")
 
     return app

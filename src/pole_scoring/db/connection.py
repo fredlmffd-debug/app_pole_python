@@ -106,7 +106,9 @@ def get_db() -> Database:
         with _instance_lock:
             if _instance is None:
                 from ..config import DB_FILE
+                from .bootstrap import run_startup_tasks
 
                 _instance = Database(DB_FILE)
+                run_startup_tasks(_instance)
 
     return _instance
