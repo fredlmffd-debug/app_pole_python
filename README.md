@@ -73,6 +73,17 @@ suivante (voir l'échange initial de conception pour le détail complet).
 - [ ] Phase 5 — PDF, exports/archives, synchronisation inter-poste
 - [ ] Phase 6 — packaging Briefcase (Windows + macOS)
 - [ ] Phase 7 — marche en parallèle, bascule finale
+- [ ] Phase 8 — refonte du fonctionnement des grilles de notation (à planifier)
+
+### Phase 8 (à planifier plus tard)
+
+Revoir la manière dont les grilles de notation sont créées/gérées (actuellement :
+4 grilles fixes — artistique/technique × solo/duo — seedées avec des critères en
+dur au démarrage, cf. `services/scoring_grids.py` et Phase 3). Le fonctionnement
+cible reste à définir par l'utilisateur ; à traiter une fois les Phases 0 à 7
+terminées et validées, pour ne pas mélanger fidélité du portage et refonte
+fonctionnelle. Les Phases 3 à 7 sont donc portées à l'identique du comportement
+Node existant en attendant.
 
 ### Détail Phase 2
 
