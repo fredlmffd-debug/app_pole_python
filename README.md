@@ -74,6 +74,7 @@ suivante (voir l'échange initial de conception pour le détail complet).
 - [ ] Phase 6 — packaging Briefcase (Windows + macOS)
 - [ ] Phase 7 — marche en parallèle, bascule finale
 - [ ] Phase 8 — refonte du fonctionnement des grilles de notation (à planifier)
+- [ ] Phase 9 — étude de faisabilité : synchronisation automatique de la base locale (à planifier)
 
 ### Phase 8 (à planifier plus tard)
 
@@ -84,6 +85,21 @@ cible reste à définir par l'utilisateur ; à traiter une fois les Phases 0 à 
 terminées et validées, pour ne pas mélanger fidélité du portage et refonte
 fonctionnelle. Les Phases 3 à 7 sont donc portées à l'identique du comportement
 Node existant en attendant.
+
+### Phase 9 (à planifier plus tard)
+
+Étude de faisabilité pour ne plus avoir à télécharger/importer manuellement un
+export de base à chaque poste scrutateur : trouver un moyen de centraliser les
+données (compétitions, compétiteurs, résultats...) et de mettre à jour
+automatiquement la base locale à l'ouverture de l'application. L'utilisateur
+dispose d'un nom de domaine et de plusieurs bases de données en ligne
+mobilisables si besoin. Reste à étudier : source de vérité centrale envisagée
+(une des bases en ligne existantes vs nouvelle base dédiée), articulation avec
+le mécanisme de synchronisation par journal d'événements déjà présent
+(`sync_events`, cf. Phase 5) qui gère aujourd'hui la fusion entre postes locaux,
+et le comportement hors-ligne (l'application doit rester utilisable en
+compétition sans réseau fiable). À traiter une fois les phases précédentes
+terminées et validées.
 
 ### Détail Phase 2
 
