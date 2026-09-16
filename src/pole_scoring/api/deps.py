@@ -28,3 +28,18 @@ def require_access_account(request: Request, db: Database, allowed_roles: list[s
         raise ValueError("Accès refusé")
 
     return account
+
+
+def _is_loopback_address(address: str | None) -> bool:
+    normalized = str(address or "").strip().replace("::ffff:", "")
+    return normalized in ("127.0.0.1", "::1")
+
+
+def require_local_system_control(request: Request) -> None:
+    """Equivalent de requireLocalSystemControl (server.js) : certaines actions
+    (export PDF, ouverture d'un dossier local) ne doivent etre declenchables
+    que depuis le poste local, jamais depuis une tablette juge sur le LAN."""
+    remote_address = request.client.host if request.client else None
+
+    if not _is_loopback_address(remote_address):
+        raise ValueError("Commande autorisée uniquement depuis le poste local")

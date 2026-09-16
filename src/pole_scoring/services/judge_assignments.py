@@ -9,6 +9,7 @@ from ..services.competitions import get_competition_row_by_id, normalize_judge_c
 from ..services.judges import is_judge_authorized_for_competition
 from ..utils.security import hash_password
 from ..utils.time import now
+from ..utils.validation import parse_int_like_js
 
 JUDGE_ASSIGNMENT_ROLES = {"head", "artistique", "technique"}
 
@@ -80,6 +81,35 @@ def _upsert_competition_judge_assignment(db: Database, payload: dict) -> None:
         WHERE excluded.updated_at > judge_competition_assignments.updated_at
         """,
         payload,
+    )
+
+
+def upsert_competition_judge_assignment(db: Database, payload: dict) -> None:
+    """Normalisation generique (tolerante snake_case/camelCase) utilisee par le
+    dispatch apply_entity de la synchronisation inter-poste (Phase 5) — distincte
+    de set_competition_judge_assignment qui valide un payload d'API utilisateur."""
+    competition_id = str(payload.get("competition_id") or payload.get("competitionId") or "").strip()
+    slot_index = parse_int_like_js(payload.get("slot_index", payload.get("slotIndex")))
+
+    if not competition_id or slot_index is None or slot_index < 1:
+        raise ValueError("Attribution juge invalide")
+
+    judge_role = normalize_judge_assignment_role(payload.get("judge_role") or payload.get("judgeRole"))
+    judge_id = str(payload.get("judge_id") or payload.get("judgeId") or "").strip()
+    raw_is_trainee = payload.get("is_trainee", payload.get("isTrainee"))
+    is_trainee = 1 if raw_is_trainee in (True, 1, "1") else 0
+    updated_at = str(payload.get("updated_at") or payload.get("updatedAt") or now()).strip() or now()
+
+    _upsert_competition_judge_assignment(
+        db,
+        {
+            "competition_id": competition_id,
+            "slot_index": slot_index,
+            "judge_role": judge_role,
+            "judge_id": judge_id or None,
+            "is_trainee": is_trainee,
+            "updated_at": updated_at,
+        },
     )
 
 

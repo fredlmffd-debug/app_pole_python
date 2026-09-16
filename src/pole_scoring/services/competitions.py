@@ -10,6 +10,7 @@ from ..utils.ids import new_id
 from ..utils.security import hash_competition_delete_password
 from ..utils.text import normalize_identity_name
 from ..utils.time import next_timestamp_after, now
+from ..utils.validation import parse_int_like_js
 from .scoring_grids import get_scoring_profile_version_ids
 
 COMPETITION_LEVELS = {"defi", "regional", "national"}
@@ -106,13 +107,35 @@ def normalize_competition_territory(level: str, region: str | None, zone: str | 
 
 def normalize_judge_count(value: object, fallback_value: int = 3) -> int:
     normalized_fallback = min(max(int(fallback_value), 1), 9) if isinstance(fallback_value, int) else 3
+    parsed_value = parse_int_like_js(value)
 
-    try:
-        parsed_value = int(str(value).strip())
-    except (TypeError, ValueError):
+    if parsed_value is None:
         return normalized_fallback
 
     return min(max(parsed_value, 1), 9)
+
+
+def normalize_competition_payload(payload: dict) -> dict:
+    """Normalisation generique d'une ligne competition brute (utilisee par le
+    dispatch apply_entity de la synchronisation inter-poste, cf. Phase 5) :
+    accepte indifferemment les cles snake_case et camelCase."""
+    event_date = str(payload.get("event_date") or payload.get("eventDate") or "").strip()
+    competition_level = normalize_competition_level(payload.get("competition_level") or payload.get("competitionLevel"))
+    territory = normalize_competition_territory(competition_level, payload.get("region"), payload.get("zone"))
+
+    return {
+        **payload,
+        "event_date": event_date,
+        "season": normalize_season(payload.get("season"), event_date),
+        "competition_level": competition_level,
+        "region": territory["region"],
+        "zone": territory["zone"],
+        "judge_count": normalize_judge_count(payload.get("judge_count") or payload.get("judgeCount")),
+        "scrutateur_name": str(payload.get("scrutateur_name") or payload.get("scrutateurName") or "").strip(),
+        "delete_password_hash": str(
+            payload.get("delete_password_hash") or payload.get("deletePasswordHash") or ""
+        ).strip(),
+    }
 
 
 def normalize_competition_identity_name(value: str | None) -> str:

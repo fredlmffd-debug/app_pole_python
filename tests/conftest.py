@@ -33,6 +33,25 @@ def bootstrapped_db(db) -> Database:
     return db
 
 
+@pytest.fixture
+def other_db(tmp_path_factory) -> Database:
+    """Base independante de `db`/`bootstrapped_db`, sur son propre fichier
+    temporaire : necessaire pour les tests "deux postes" (export/import,
+    synchronisation) qui doivent operer sur deux fichiers .sqlite distincts —
+    demander `db` et `other_db` dans le meme test ne pointe jamais vers le
+    meme fichier, contrairement a `db`/`bootstrapped_db` qui partagent le
+    meme fixture sous-jacent quand les deux sont demandes ensemble."""
+    database = Database(tmp_path_factory.mktemp("other-db") / "pole-scoring.sqlite")
+    yield database
+    database.close()
+
+
+@pytest.fixture
+def other_bootstrapped_db(other_db: Database) -> Database:
+    run_startup_tasks(other_db)
+    return other_db
+
+
 def _default_reference_db_path() -> Path:
     return Path(__file__).resolve().parents[2] / "app_pole" / "data" / "pole-scoring.sqlite"
 

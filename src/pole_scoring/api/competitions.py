@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Request
 from ..db.connection import Database
 from ..services import competitions as competitions_service
 from ..services import competitors as competitors_service
+from ..services import pdf_export as pdf_export_service
 from ..services.competitors import parse_resident_flag
 from ..utils.validation import optional_string, require_number, require_string
 from .deps import get_database
@@ -49,6 +50,9 @@ async def create_competition(request: Request, db: Database = Depends(get_databa
 
 @router.put("/competitions/{competition_id}")
 async def update_competition(competition_id: str, request: Request, db: Database = Depends(get_database)) -> dict:
+    previous_status = next(
+        (item["status"] for item in competitions_service.list_competitions(db) if item["id"] == competition_id), None
+    )
     body = await request.json()
     competition = competitions_service.update_competition(
         db,
@@ -66,8 +70,13 @@ async def update_competition(competition_id: str, request: Request, db: Database
         status=optional_string(body.get("status"), "draft") or "draft",
     )
 
-    # Le nettoyage des PDF exportes a la cloture sera branche en Phase 5 (export PDF).
-    return {**competition, "exportsCleanup": {"deletedCount": 0, "deletedFiles": []}}
+    cleanup = (
+        pdf_export_service.cleanup_competition_pdf_exports(db, competition_id)
+        if previous_status != "closed" and competition["status"] == "closed"
+        else {"deletedCount": 0, "deletedFiles": []}
+    )
+
+    return {**competition, "exportsCleanup": cleanup}
 
 
 @router.delete("/competitions/{competition_id}")

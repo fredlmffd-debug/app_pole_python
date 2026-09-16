@@ -166,3 +166,57 @@ def test_presenter_flow_over_http(db) -> None:
     bootstrap_body = bootstrap_response.json()
     assert "dashboard" in bootstrap_body
     assert any(item["id"] == competition["id"] for item in bootstrap_body["competitions"])
+
+
+def test_db_export_import_round_trip_over_http(db, other_db) -> None:
+    source_client = make_client(db)
+    source_client.post("/api/competitions", json={"name": "Comp DB HTTP", "eventDate": "2026-09-17"})
+
+    export_response = source_client.get("/api/db/export")
+    assert export_response.status_code == 200
+    assert export_response.headers["content-type"] == "application/vnd.sqlite3"
+
+    target_client = make_client(other_db)
+    import_response = target_client.post(
+        "/api/db/import", content=export_response.content, headers={"Content-Type": "application/octet-stream"}
+    )
+    assert import_response.status_code == 200
+    assert import_response.json()["counts"]["competitions"] == 1
+
+    list_response = target_client.get("/api/competitions")
+    assert any(item["name"] == "Comp DB HTTP" for item in list_response.json())
+
+
+def test_sync_export_import_round_trip_over_http(db, other_db) -> None:
+    source_client = make_client(db)
+    source_client.post("/api/competitions", json={"name": "Comp Sync HTTP", "eventDate": "2026-09-18"})
+
+    export_response = source_client.get("/api/sync/export")
+    assert export_response.status_code == 200
+
+    target_client = make_client(other_db)
+    import_response = target_client.post("/api/sync/import", json=export_response.json())
+    assert import_response.status_code == 200
+    assert import_response.json()["snapshotImported"]["competitions"] == 1
+
+    list_response = target_client.get("/api/competitions")
+    assert any(item["name"] == "Comp Sync HTTP" for item in list_response.json())
+
+
+def test_pdf_export_rejected_from_non_loopback_client(db) -> None:
+    client = make_client(db)
+    response = client.post("/api/pdf/export", json={"type": "scoring_sheets", "competitionId": "whatever"})
+    assert response.status_code == 400
+    assert "poste local" in response.json()["error"]
+
+
+def test_pdf_list_and_browse_empty(db) -> None:
+    client = make_client(db)
+
+    list_response = client.get("/api/pdf/list", params={"type": "scoring_sheets"})
+    assert list_response.status_code == 200
+    assert list_response.json()["files"] == []
+
+    browse_response = client.get("/api/pdf/browse", params={"type": "scoring_sheets"})
+    assert browse_response.status_code == 200
+    assert "text/html" in browse_response.headers["content-type"]

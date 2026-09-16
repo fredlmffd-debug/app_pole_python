@@ -70,7 +70,7 @@ suivante (voir l'échange initial de conception pour le détail complet).
 - [x] Phase 2 — comptes/accès, compétitions, compétiteurs, juges (CRUD)
 - [x] Phase 3 — moteur de notation (grilles/critères versionnés, scores, saisie manuelle)
 - [x] Phase 4 — présentateur, résultats, statistiques
-- [ ] Phase 5 — PDF, exports/archives, synchronisation inter-poste
+- [x] Phase 5 — PDF, exports/archives, synchronisation inter-poste
 - [ ] Phase 6 — packaging Briefcase (Windows + macOS)
 - [ ] Phase 7 — marche en parallèle, bascule finale
 - [ ] Phase 8 — refonte du fonctionnement des grilles de notation (à planifier)
@@ -100,6 +100,55 @@ le mécanisme de synchronisation par journal d'événements déjà présent
 et le comportement hors-ligne (l'application doit rester utilisable en
 compétition sans réseau fiable). À traiter une fois les phases précédentes
 terminées et validées.
+
+### Détail Phase 5
+
+Portés : export PDF (pilotage d'Edge/Chrome headless installé sur le poste,
+identique à la version Node), index des exports, nettoyage des PDF d'une
+compétition à sa clôture (`exportsCleanup`, branché dans la route `PUT
+/api/competitions/{id}` — c'était un stub depuis la Phase 2), navigateur de
+fichiers exportés (`/api/pdf/browse`), export/import de la base SQLite
+complète, archivage par saison (garder N saisons, déplacer le reste dans un
+fichier `.sqlite` séparé, purge optionnelle), restauration d'une archive par
+fusion (`INSERT OR IGNORE`, ne casse jamais les données déjà présentes), et la
+synchronisation inter-poste (export/import d'un instantané complet + rejeu du
+journal `sync_events`, avec dédoublonnage automatique par id).
+
+Les actions qui touchent au système local (export PDF, ouverture d'un dossier)
+sont protégées par un contrôle d'origine (`require_local_system_control`) :
+refusées si la requête ne vient pas de `127.0.0.1`, pour qu'une tablette juge
+sur le réseau local ne puisse jamais les déclencher — équivalent de
+`requireLocalSystemControl` côté Node.
+
+Deux bugs réels détectés et corrigés pendant cette phase :
+
+1. Plusieurs fonctions d'export/archivage (`export_database_snapshot`,
+   `checkpoint_wal_and_get_db_files_size`, `create_archive_file_for_seasons`,
+   `list_database_archives`, `export_database_archive`) lisaient le chemin de
+   base **global** (`config.DB_FILE`/`DATA_DIR`) au lieu du chemin réel de
+   l'instance `Database` reçue en paramètre. Invisible en usage normal (un
+   seul poste = une seule base via `get_db()`), mais faux dès qu'on manipule
+   plusieurs bases dans le même process — exactement le scénario des tests
+   "deux postes" qui a révélé le problème. Corrigé en exposant `db_file` /
+   `data_dir` / `archives_dir` comme propriétés de `Database`
+   ([db/connection.py](src/pole_scoring/db/connection.py)) et en les utilisant
+   partout dans `db_maintenance.py` plutôt que les constantes globales.
+2. Bug de test (pas de code applicatif) : `bootstrapped_db` dépendant de la
+   fixture `db`, demander les deux dans la même fonction de test renvoie le
+   **même** objet Python (mise en cache des fixtures pytest par test), pas
+   deux bases séparées — ce qui invalidait plusieurs tests "export d'un poste
+   vers un autre". Corrigé en ajoutant une fixture `other_db` réellement
+   indépendante (fichier temporaire distinct) pour ces cas.
+
+Comme pour le bug `running_order` de la Phase 3, la leçon se répète : les
+tests HTTP/multi-instances de bout en bout trouvent des classes de bugs que
+les tests unitaires isolés ne peuvent pas voir — à garder en tête pour les
+phases suivantes.
+
+Test manuel supplémentaire (au-delà des 126 tests pytest) : génération d'un
+vrai PDF via l'app réelle (Edge/Chrome headless, 1091 octets produits,
+ouverture automatique de l'Explorateur Windows confirmée), export/import de
+base SQLite et export sync via `curl` sur le port isolé.
 
 ### Détail Phase 4
 

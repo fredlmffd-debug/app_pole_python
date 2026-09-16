@@ -21,6 +21,7 @@ class Database:
         db_file.parent.mkdir(parents=True, exist_ok=True)
         (db_file.parent / "archives").mkdir(parents=True, exist_ok=True)
 
+        self._db_file = db_file
         self._lock = threading.RLock()
         self._connection = sqlite3.connect(str(db_file), check_same_thread=False)
         self._connection.row_factory = sqlite3.Row
@@ -71,6 +72,18 @@ class Database:
     @property
     def lock(self) -> threading.RLock:
         return self._lock
+
+    @property
+    def db_file(self) -> Path:
+        return self._db_file
+
+    @property
+    def data_dir(self) -> Path:
+        return self._db_file.parent
+
+    @property
+    def archives_dir(self) -> Path:
+        return self._db_file.parent / "archives"
 
 
 class _Transaction:
