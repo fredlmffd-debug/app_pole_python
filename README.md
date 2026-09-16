@@ -69,7 +69,7 @@ suivante (voir l'échange initial de conception pour le détail complet).
 - [x] Phase 1 — couche base de données (schéma, hashing, journal d'événements)
 - [x] Phase 2 — comptes/accès, compétitions, compétiteurs, juges (CRUD)
 - [x] Phase 3 — moteur de notation (grilles/critères versionnés, scores, saisie manuelle)
-- [ ] Phase 4 — présentateur, résultats, statistiques
+- [x] Phase 4 — présentateur, résultats, statistiques
 - [ ] Phase 5 — PDF, exports/archives, synchronisation inter-poste
 - [ ] Phase 6 — packaging Briefcase (Windows + macOS)
 - [ ] Phase 7 — marche en parallèle, bascule finale
@@ -100,6 +100,22 @@ le mécanisme de synchronisation par journal d'événements déjà présent
 et le comportement hors-ligne (l'application doit rester utilisable en
 compétition sans réseau fiable). À traiter une fois les phases précédentes
 terminées et validées.
+
+### Détail Phase 4
+
+Portés : état complet du présentateur (`getPresenterState` — passage actif,
+compétition active, progression des juges validés/en attente, URL des
+résultats), activation/finalisation d'un passage, activation/désactivation de
+l'affichage des résultats, état du tableau de bord (`getDashboardState`), et
+la route `/api/bootstrap` qui agrège tout ça au chargement de l'app (résumé,
+dashboard, chemin de la base, URLs LAN, compétitions, juges).
+
+Confirmé en relisant le frontend (`individual-statistics.js`,
+`competition-results.js`, `category-results.js`, `tablet-recap.js`) : il n'y a
+pas d'endpoint « statistiques » séparé côté serveur — ces pages consomment les
+endpoints déjà portés (`results`, `competitors`, `scoring-profile`,
+`judge-assignments`) et calculent l'affichage côté client. Le seul morceau
+encore manquant pour ces pages est l'export PDF (Phase 5).
 
 ### Détail Phase 3
 

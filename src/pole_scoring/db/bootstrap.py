@@ -12,6 +12,7 @@ from ..services.competitions import (
     normalize_season,
 )
 from ..services.competitors import normalize_competitor_members, sync_competitor_members
+from ..services.presenter import clear_presenter_active_passage
 from ..services.scores import refresh_all_competitor_score_summaries
 from ..services.scoring_grids import ensure_default_scoring_grids
 from ..utils.time import now
@@ -95,3 +96,4 @@ def run_startup_tasks(db: Database) -> None:
     _backfill_competition_defaults(db)
     ensure_default_scoring_grids(db)
     refresh_all_competitor_score_summaries(db)
+    clear_presenter_active_passage(db)

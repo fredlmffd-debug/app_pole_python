@@ -133,3 +133,36 @@ def test_scoring_and_notation_flow_over_http(db) -> None:
     assert results_response.status_code == 200
     body = results_response.json()
     assert any(item["id"] == competitor["id"] for item in body["results"])
+
+
+def test_presenter_flow_over_http(db) -> None:
+    client = make_client(db)
+
+    competition = client.post(
+        "/api/competitions", json={"name": "Comp Presenter HTTP", "eventDate": "2026-09-09", "judgeCount": 1}
+    ).json()
+    competitor = client.post(
+        f"/api/competitions/{competition['id']}/competitors",
+        json={"firstName": "Alice", "lastName": "Martin", "runningOrder": 1},
+    ).json()
+
+    activate_response = client.post(
+        "/api/presenter/active", json={"competitionId": competition["id"], "competitorId": competitor["id"]}
+    )
+    assert activate_response.status_code == 200
+    assert activate_response.json()["activePassage"]["id"] == competitor["id"]
+
+    state_response = client.get("/api/presenter/state")
+    assert state_response.status_code == 200
+    assert state_response.json()["activePassage"]["id"] == competitor["id"]
+
+    finalize_response = client.post(
+        "/api/presenter/finalize", json={"competitionId": competition["id"], "competitorId": competitor["id"]}
+    )
+    assert finalize_response.status_code == 200
+
+    bootstrap_response = client.get("/api/bootstrap")
+    assert bootstrap_response.status_code == 200
+    bootstrap_body = bootstrap_response.json()
+    assert "dashboard" in bootstrap_body
+    assert any(item["id"] == competition["id"] for item in bootstrap_body["competitions"])

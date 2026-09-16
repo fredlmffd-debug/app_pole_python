@@ -403,6 +403,19 @@ def update_competition(
     return get_competition_row_by_id(db, competition_id)
 
 
+def get_active_competition_for_dashboard(db: Database) -> dict | None:
+    return db.query_one(
+        """
+        SELECT id, name, location, event_date AS eventDate, season, competition_level AS competitionLevel,
+               region, zone, judge_count AS judgeCount, COALESCE(scrutateur_name, '') AS scrutateurName, status
+        FROM competitions
+        WHERE status = 'active'
+        ORDER BY updated_at DESC
+        LIMIT 1
+        """
+    )
+
+
 def delete_competition(db: Database, competition_id: str) -> dict:
     competition = get_competition_row_by_id(db, competition_id)
 
