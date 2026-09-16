@@ -9,7 +9,7 @@ qui vit en parallèle le temps de la migration.
 ## Architecture
 
 - Fenêtre native : [pywebview](https://pywebview.flowrl.com/) (WebView2 sur Windows,
-  WKWebView sur macOS)
+  via pythonnet/clr)
 - Backend local : FastAPI + uvicorn, lancé en thread interne sur `127.0.0.1:4380`
   (`0.0.0.0` par défaut pour rester accessible aux tablettes juges sur le réseau local,
   comme la version Node)
@@ -20,8 +20,10 @@ qui vit en parallèle le temps de la migration.
   à la version Node, pour un rendu pixel-identique des feuilles de notation/résultats)
 - Frontend : `src/pole_scoring/webui/` est une copie conforme de `app_pole/public/`,
   non modifiée sauf nécessité identifiée en cours de migration
-- Packaging : [Briefcase](https://briefcase.readthedocs.io/) pour produire un `.exe`
-  Windows et un `.app` macOS depuis le même projet
+- Packaging : **Windows uniquement** (pas d'accès à macOS) — [PyInstaller](https://pyinstaller.org/)
+  fige l'app en dossier autonome, [Inno Setup](https://jrsoftware.org/isinfo.php) l'emballe
+  en `pole-scoring-setup.exe`, exactement l'outillage déjà utilisé côté version Node
+  (voir [Packaging Windows](#packaging-windows) ci-dessous)
 
 ## Structure
 
@@ -36,7 +38,11 @@ src/pole_scoring/
   models/          schémas de requêtes/réponses
   utils/           hashing, normalisations, helpers
   webui/           interface HTML/CSS/JS (copie de app_pole/public)
-resources/         icônes pour le packaging (.ico / .icns)
+entry_point.py     point d'entrée PyInstaller (hors package, cf. Phase 6)
+pole-scoring.spec  spec PyInstaller (mode onedir)
+resources/         icône .ico
+installer/         script Inno Setup (.iss) + icône
+scripts/           build-portable.ps1 (PyInstaller), build-installer.ps1 (+ Inno Setup)
 ```
 
 ## Développement
@@ -60,6 +66,30 @@ lecture seule) de la vraie base `app_pole/data/pole-scoring.sqlite` — jamais l
 utilisé par l'application Node en cours d'exécution. Chemin surchargeable via la variable
 `POLE_SCORING_REFERENCE_DB`.
 
+## Packaging Windows
+
+- Bundle portable (dossier autonome, PyInstaller) :
+  - `powershell -ExecutionPolicy Bypass -File scripts\build-portable.ps1`
+  - Sortie : `dist\pole-scoring\pole-scoring.exe` (+ `_internal\`)
+  - Nécessite le venv de dev déjà créé (`.venv\Scripts\pip install -e ".[dev]"`)
+
+- Installateur EXE (Inno Setup) :
+  - `powershell -ExecutionPolicy Bypass -File scripts\build-installer.ps1`
+  - Sortie : `dist\installer\pole-scoring-setup.exe`
+  - Enchaîne automatiquement `build-portable.ps1`, puis cherche `ISCC.exe`
+    (`C:\Tools\InnoSetup\`, `Program Files\Inno Setup 6\`, ou dans le `PATH`)
+  - Si `ISCC.exe` est introuvable, le script s'arrête proprement après le
+    bundle portable (même repli que `build-installer.ps1` côté Node) — pas
+    d'erreur bloquante, juste l'installateur final qui n'est pas produit
+
+- Données locales en exécution installée : `%LOCALAPPDATA%\PoleScoringLocal\data`
+  (identique à la version Node, via `platformdirs` côté Python)
+
+Validé de bout en bout sur ce poste : build PyInstaller → compilation Inno Setup
+→ installation silencieuse (`/VERYSILENT`) → vérification que l'app installée
+répond → désinstallation silencieuse via l'uninstaller généré, sans rien laisser
+derrière (dossier, raccourcis, registre).
+
 ## État de la migration
 
 Migration menée phase par phase, chaque phase étant testée avant de passer à la
@@ -71,7 +101,7 @@ suivante (voir l'échange initial de conception pour le détail complet).
 - [x] Phase 3 — moteur de notation (grilles/critères versionnés, scores, saisie manuelle)
 - [x] Phase 4 — présentateur, résultats, statistiques
 - [x] Phase 5 — PDF, exports/archives, synchronisation inter-poste
-- [ ] Phase 6 — packaging Briefcase (Windows + macOS)
+- [x] Phase 6 — packaging Windows (PyInstaller + Inno Setup)
 - [ ] Phase 7 — marche en parallèle, bascule finale
 - [ ] Phase 8 — refonte du fonctionnement des grilles de notation (à planifier)
 - [ ] Phase 9 — étude de faisabilité : synchronisation automatique de la base locale (à planifier)
@@ -100,6 +130,52 @@ le mécanisme de synchronisation par journal d'événements déjà présent
 et le comportement hors-ligne (l'application doit rester utilisable en
 compétition sans réseau fiable). À traiter une fois les phases précédentes
 terminées et validées.
+
+### Détail Phase 6
+
+Décision : abandon de Briefcase (choisi en Phase 0 pour son intérêt
+multi-OS) au profit de **PyInstaller + Inno Setup**, une fois macOS écarté
+du périmètre (pas d'accès à une machine Apple). Sans le besoin multi-OS,
+Briefcase n'apportait plus rien et aurait demandé d'installer un nouvel
+outil (WiX Toolset, nécessaire à son packaging Windows en `.msi`) alors
+qu'Inno Setup — déjà utilisé pour la version Node, avec un script et une
+icône déjà prêts à être réadaptés — était déjà disponible sur le poste de
+build (`C:\Tools\InnoSetup\ISCC.exe`).
+
+Mis en place :
+- `entry_point.py` (racine du projet, hors du package) : PyInstaller traite
+  le script d'analyse comme un module `__main__` isolé, donc les imports
+  relatifs de `pole_scoring/__main__.py` ne se résolvent que si `pole_scoring`
+  est importé normalement depuis un point d'entrée externe au package.
+- `pole-scoring.spec` : mode `onedir` (un dossier `pole-scoring/` avec l'exe
+  et ses dépendances, comme le `dist/portable` de la version Node plutôt
+  qu'un `onefile` qui se décompresse à chaque lancement). Utilise
+  `collect_all` pour `pythonnet`/`clr_loader`/`webview` : pywebview pilote la
+  fenêtre via pythonnet/WebView2 sur Windows, et ces paquets embarquent des
+  assemblies .NET que PyInstaller ne détecte pas tout seul par analyse de
+  code. Les hooks communautaires (`pyinstaller-hooks-contrib`, installé
+  automatiquement) couvrent uvicorn/pydantic/sqlite3/platformdirs sans
+  configuration supplémentaire.
+- `app.py` : `WEBUI_DIR` se résout désormais via `sys._MEIPASS` quand l'app
+  est figée (`sys.frozen`), plutôt que `Path(__file__).parent` qui ne pointe
+  vers rien d'utile une fois le code Python compilé/archivé par PyInstaller.
+- `installer/pole-scoring.iss` : quasi identique au script Inno Setup de la
+  version Node (même `AppId` changé pour rester distinct, même structure
+  `[Files]`/`[Icons]`/`[Run]`), pointe sur `dist\pole-scoring` au lieu de
+  `dist\portable`.
+- `scripts/build-portable.ps1` et `scripts/build-installer.ps1` : même
+  répartition des responsabilités et même repli que côté Node — si
+  `ISCC.exe` est introuvable, le script s'arrête après le bundle portable
+  sans erreur bloquante plutôt que d'échouer.
+
+Validé de bout en bout sur ce poste (le poste de travail principal de
+l'utilisateur, à sa demande) : build PyInstaller réussi du premier coup
+(aucun hidden-import manuant à ajouter à la main), `.exe` autonome testé
+(API + fenêtre native), compilation Inno Setup réussie (~20 Mo), puis
+installation silencieuse réelle (`/VERYSILENT`), vérification que
+l'application installée répond, et désinstallation silencieuse via
+l'uninstaller généré — sans rien laisser derrière (dossier, raccourcis
+Bureau/menu Démarrer, entrée de registre).
 
 ### Détail Phase 5
 

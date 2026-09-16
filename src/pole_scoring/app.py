@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -11,7 +12,12 @@ from .api import access, competitions, db_admin, judge_assignments, judges, pdf,
 from .db.connection import get_db
 from .services.system import get_lan_urls, get_summary
 
-WEBUI_DIR = Path(__file__).resolve().parent / "webui"
+# Une fois fige par PyInstaller, les fichiers embarques (--add-data) sont
+# extraits/places sous sys._MEIPASS (mode onefile comme onedir) ; en
+# developpement, on reste a cote du module comme avant.
+WEBUI_DIR = (
+    Path(sys._MEIPASS) / "webui" if getattr(sys, "frozen", False) else Path(__file__).resolve().parent / "webui"
+)
 
 
 def create_app() -> FastAPI:
