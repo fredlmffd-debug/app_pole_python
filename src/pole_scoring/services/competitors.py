@@ -8,6 +8,7 @@ from ..db.settings import get_node_id
 from ..utils.ids import new_id
 from ..utils.text import normalize_ascii_lower, normalize_identity_name, strip_accents
 from ..utils.time import next_timestamp_after, now
+from ..utils.validation import parse_int_like_js
 
 COMPETITOR_MEMBER_SEPARATOR = " / "
 COMPETITOR_STATUSES = {"registered", "withdrawn", "forfeit", "disqualified"}
@@ -196,10 +197,7 @@ def normalize_competitor_payload(payload: dict) -> dict:
         else build_competitor_stage_name(first_name, last_name, payload.get("stage_name") or payload.get("stageName"))
     )
 
-    try:
-        running_order = int(str(payload.get("running_order", payload.get("runningOrder", ""))).strip())
-    except (TypeError, ValueError):
-        running_order = None
+    running_order = parse_int_like_js(payload.get("running_order", payload.get("runningOrder")))
 
     return {
         **payload,

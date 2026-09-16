@@ -7,7 +7,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from .api import access, competitions, judges
+from .api import access, competitions, judge_assignments, judges, scores, scoring
 from .db.connection import get_db
 from .services.system import get_lan_urls, get_summary
 
@@ -33,10 +33,13 @@ def create_app() -> FastAPI:
     app.include_router(access.router)
     app.include_router(competitions.router)
     app.include_router(judges.router)
+    app.include_router(judge_assignments.router)
+    app.include_router(scoring.router)
+    app.include_router(scores.router)
 
-    # Les routeurs restants (scores, presenter, pdf, sync, db admin, ...) seront
-    # inclus ici au fil des phases suivantes, avant le montage statique ci-dessous
-    # qui doit rester en dernier (fallback fichiers + index.html).
+    # Les routeurs restants (presenter, pdf, sync, db admin, ...) seront inclus
+    # ici au fil des phases suivantes, avant le montage statique ci-dessous qui
+    # doit rester en dernier (fallback fichiers + index.html).
     app.mount("/", StaticFiles(directory=WEBUI_DIR, html=True), name="webui")
 
     return app

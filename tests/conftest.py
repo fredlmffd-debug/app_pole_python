@@ -8,6 +8,13 @@ import pytest
 
 from pole_scoring.db.bootstrap import run_startup_tasks
 from pole_scoring.db.connection import Database
+from pole_scoring.db.settings import set_setting
+from pole_scoring.services import competitions as competitions_service
+from pole_scoring.services import competitors as competitors_service
+from pole_scoring.services import judge_assignments as judge_assignments_service
+from pole_scoring.services import judges as judges_service
+from pole_scoring.services.presenter import PRESENTER_ACTIVE_PASSAGE_KEY
+from pole_scoring.utils.time import now
 
 
 @pytest.fixture
@@ -57,3 +64,59 @@ def reference_db(reference_db_copy) -> Database:
     run_startup_tasks(database)
     yield database
     database.close()
+
+
+def activate_presenter_passage(db: Database, competition_id: str, competitor_id: str) -> None:
+    """Equivalent minimal de setPresenterActivePassage (Phase 4 non portee) :
+    juste ce qu'il faut pour que les tests de notation (Phase 3) puissent
+    activer un passage sans dependre du reste du module presentateur."""
+    import json
+
+    set_setting(
+        db,
+        PRESENTER_ACTIVE_PASSAGE_KEY,
+        json.dumps({"competitionId": competition_id, "competitorId": competitor_id, "updatedAt": now()}),
+    )
+
+
+@pytest.fixture
+def scoring_setup(bootstrapped_db: Database) -> dict:
+    """Competition + un juge 'head' (technique/penalites) + un juge
+    'artistique', un competiteur solo, et le passage active sur ce
+    competiteur : de quoi tester l'enregistrement de notes de bout en bout."""
+    competition = competitions_service.create_competition(
+        bootstrapped_db, name="Comp Notation", event_date="2026-09-01", judge_count=2
+    )
+    head_judge = judges_service.add_judge(
+        bootstrapped_db, first_name="Head", last_name="Judge", login="head", password="secret"
+    )
+    artistic_judge = judges_service.add_judge(
+        bootstrapped_db, first_name="Art", last_name="Judge", login="art", password="secret"
+    )
+    judge_assignments_service.set_competition_judge_assignment(
+        bootstrapped_db, competition_id=competition["id"], slot_index=1, judge_role="head", judge_id=head_judge["id"]
+    )
+    judge_assignments_service.set_competition_judge_assignment(
+        bootstrapped_db,
+        competition_id=competition["id"],
+        slot_index=2,
+        judge_role="artistique",
+        judge_id=artistic_judge["id"],
+    )
+    competitor = competitors_service.add_competitor(
+        bootstrapped_db,
+        competition_id=competition["id"],
+        first_name="Jeanne",
+        last_name="Dupont",
+        running_order=1,
+        category="Senior",
+    )
+    activate_presenter_passage(bootstrapped_db, competition["id"], competitor["id"])
+
+    return {
+        "db": bootstrapped_db,
+        "competition": competition,
+        "head_judge": head_judge,
+        "artistic_judge": artistic_judge,
+        "competitor": competitor,
+    }

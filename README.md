@@ -68,7 +68,7 @@ suivante (voir l'échange initial de conception pour le détail complet).
 - [x] Phase 0 — scaffolding : fenêtre native + `/api/health` + frontend servi tel quel
 - [x] Phase 1 — couche base de données (schéma, hashing, journal d'événements)
 - [x] Phase 2 — comptes/accès, compétitions, compétiteurs, juges (CRUD)
-- [ ] Phase 3 — moteur de notation (grilles/critères versionnés, scores, saisie manuelle)
+- [x] Phase 3 — moteur de notation (grilles/critères versionnés, scores, saisie manuelle)
 - [ ] Phase 4 — présentateur, résultats, statistiques
 - [ ] Phase 5 — PDF, exports/archives, synchronisation inter-poste
 - [ ] Phase 6 — packaging Briefcase (Windows + macOS)
@@ -100,6 +100,32 @@ le mécanisme de synchronisation par journal d'événements déjà présent
 et le comportement hors-ligne (l'application doit rester utilisable en
 compétition sans réseau fiable). À traiter une fois les phases précédentes
 terminées et validées.
+
+### Détail Phase 3
+
+Portés : CRUD complet des grilles/critères de notation (versioning, activation),
+assignations de juges par compétition (y compris détection de double
+affectation), présence/état d'accès juge (`getJudgeAccessState`), connexion
+juge (`judge-login`), enregistrement des scores (ajout direct, brouillon en
+direct, fiche finale de juge, saisie manuelle par lot), historique de notation
+par catégorie, profil de notation d'une compétition, et le recalcul global des
+résumés de scores au démarrage (`refreshAllCompetitorScoreSummaries`). Un
+sous-ensemble minimal de l'état présentateur (`services/presenter.py` :
+passage actif get/clear) a été pulled forward en avance de phase car la
+validation d'un score en dépend ; le reste (activer/finaliser un passage,
+activer les résultats) reste en Phase 4.
+
+Un bug réel a été détecté grâce aux tests HTTP de bout en bout (et non par les
+tests directs sur les services) : `running_order` devenait `NULL` en base
+lorsqu'il transitait par `require_number` (qui renvoie un flottant) puis par un
+`int(str(valeur))` côté service — `str(1.0)` donne `"1.0"` en Python, que
+`int()` ne sait pas parser, alors que l'équivalent JS (`Number.parseInt`)
+s'en sort car `String(1.0)` vaut `"1"` côté JavaScript. Corrigé via un
+nouvel utilitaire partagé `utils/validation.py::parse_int_like_js`, qui
+reproduit fidèlement la conversion JS. Ce type d'écart (mêmes règles métier,
+sémantiques numériques différentes entre JS et Python) est le principal risque
+de cette migration — les tests HTTP de bout en bout, en plus des tests
+unitaires par service, restent donc importants pour la suite.
 
 ### Détail Phase 2
 

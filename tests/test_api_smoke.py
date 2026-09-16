@@ -90,3 +90,46 @@ def test_access_bootstrap_and_role_protected_route(db) -> None:
     authenticated_response = client.get("/api/access/accounts", headers={"x-access-token": token})
     assert authenticated_response.status_code == 200
     assert len(authenticated_response.json()) == 1
+
+
+def test_scoring_and_notation_flow_over_http(db) -> None:
+    client = make_client(db)
+
+    competition = client.post(
+        "/api/competitions", json={"name": "Comp Notation HTTP", "eventDate": "2026-09-08", "judgeCount": 1}
+    ).json()
+    judge = client.post(
+        "/api/judges", json={"firstName": "Head", "lastName": "Judge", "login": "head", "password": "secret"}
+    ).json()
+    competitor = client.post(
+        f"/api/competitions/{competition['id']}/competitors",
+        json={"firstName": "Jeanne", "lastName": "Dupont", "runningOrder": 1},
+    ).json()
+
+    assignment_response = client.post(
+        f"/api/competitions/{competition['id']}/judge-assignments",
+        json={"slotIndex": 1, "judgeRole": "head", "judgeId": judge["id"]},
+    )
+    assert assignment_response.status_code == 200
+    assert assignment_response.json()[0]["judgeId"] == judge["id"]
+
+    grids_response = client.get("/api/scoring/grids")
+    assert grids_response.status_code == 400  # non authentifie
+
+    manual_save_response = client.post(
+        "/api/manual-scoring/save",
+        json={
+            "competitionId": competition["id"],
+            "competitorId": competitor["id"],
+            "entries": [
+                {"judgeId": judge["id"], "criterion": f"technical:{i}", "score": 4} for i in range(1, 7)
+            ],
+        },
+    )
+    assert manual_save_response.status_code == 200
+    assert manual_save_response.json()["savedCount"] == 6
+
+    results_response = client.get(f"/api/competitions/{competition['id']}/results")
+    assert results_response.status_code == 200
+    body = results_response.json()
+    assert any(item["id"] == competitor["id"] for item in body["results"])
