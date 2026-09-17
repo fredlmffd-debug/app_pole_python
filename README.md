@@ -136,9 +136,66 @@ suivante (voir l'échange initial de conception pour le détail complet).
 - [x] Phase 4 — présentateur, résultats, statistiques
 - [x] Phase 5 — PDF, exports/archives, synchronisation inter-poste
 - [x] Phase 6 — packaging Windows (PyInstaller + Inno Setup)
+- [ ] **Phase 6bis — fenêtres popup multiples (tablet-recap, saisie manuelle...) : à corriger en priorité, voir ci-dessous**
 - [ ] Phase 7 — marche en parallèle, bascule finale
 - [ ] Phase 8 — refonte du fonctionnement des grilles de notation (à planifier)
 - [ ] Phase 9 — étude de faisabilité : synchronisation automatique de la base locale (à planifier)
+
+### Phase 6bis (à corriger en priorité — bloquant pour valider l'usage réel)
+
+Remonté par l'utilisateur en testant : envoyer un passage aux tablettes
+depuis le Conducteur affiche "le navigateur a bloqué une fenêtre" et la
+fenêtre tablet-recap s'ouvre dans le navigateur système (Edge) au lieu
+d'une fenêtre de l'application. Exigence explicite de l'utilisateur : le
+scrutateur doit pouvoir suivre la notation en direct dans une fenêtre
+séparée **tout en continuant à travailler dans la fenêtre principale** —
+donc une vraie fenêtre indépendante, pas une modale bloquante dans la même
+fenêtre.
+
+**Cause racine, vérifiée dans le code source de pywebview installé**
+(`.venv/Lib/site-packages/webview/platforms/edgechromium.py`, méthode
+`on_new_window_request`) : pywebview intercepte systématiquement tout appel
+JS à `window.open()` via l'événement WebView2 `NewWindowRequested`
+(`args.set_Handled(True)` inconditionnel) et, selon le réglage
+`webview.settings['OPEN_EXTERNAL_LINKS_IN_BROWSER']` (`True` par défaut),
+soit ouvre l'URL dans le navigateur système (`webbrowser.open()`), soit
+navigue dans la fenêtre courante à la place. Aucun réglage ne permet
+d'obtenir le comportement natif d'un navigateur (vraie fenêtre enfant liée).
+Ce n'est pas spécifique à Node (qui utilise un vrai navigateur, sans ce
+problème) — c'est propre à l'architecture pywebview de la version Python.
+
+**Conséquence plus large que le message d'erreur** : `public/app.js` (copié
+dans `webui/`) utilise `window.opener` + `postMessage` pour que les fenêtres
+popup (tablet-recap, saisie manuelle, saisie en lot, classement catégorie)
+préviennent le tableau de bord de leurs événements (fermeture, validation,
+sauvegarde) — cf. `openDedicatedWindow()` et le listener `window.addEventListener('message', ...)`
+dans `app.js`, et `notifyConductor()` dans `tablet-recap.js`. Ce lien
+`window.opener` n'existe que si la fenêtre a été ouverte par un vrai
+`window.open()` du navigateur ; dès que pywebview intercepte et redirige,
+ce lien est cassé silencieusement, quelle que soit la fenêtre où la page
+popup finit par s'afficher.
+
+Point rassurant : le bouton "Libérer les tablettes" (cf. plus bas) reste
+fiable malgré ça, car il relit toujours l'état réel depuis
+`/api/presenter/state` plutôt que de dépendre d'une référence de fenêtre.
+Seule la fermeture automatique de la popup ne fonctionnerait pas dans ce
+cas précis.
+
+**Piste de correctif (à valider avant implémentation)**, concerne
+uniquement `webui/` (pas `app_pole/public/`, qui n'a pas ce problème) :
+1. Exposer une petite API Python à la fenêtre principale via le paramètre
+   `js_api` de `webview.create_window()` dans `__main__.py`, avec une
+   méthode type `open_window(url, name, width, height)` qui appelle
+   `webview.create_window(...)` côté Python pour créer une vraie fenêtre
+   native indépendante (pas de blocage de la fenêtre principale).
+2. Dans `openDedicatedWindow()` (`webui/app.js`), détecter `window.pywebview`
+   et appeler cette API à la place de `window.open()` quand elle est
+   disponible (comportement Node/navigateur inchangé sinon — divergence
+   volontaire et documentée entre `webui/app.js` et `public/app.js`).
+3. Remplacer la synchronisation par `postMessage` (qui ne fonctionnera plus
+   pour ces fenêtres) par un sondage périodique de l'API côté tableau de
+   bord (`/api/presenter/state`, etc.) — plus robuste de toute façon, dans
+   le même esprit que "Libérer les tablettes".
 
 ### Phase 8 (à planifier plus tard)
 
