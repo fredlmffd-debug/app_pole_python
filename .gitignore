@@ -6,4 +6,8 @@ build/
 dist/
 *.egg-info/
 data/
+data-test/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
 .DS_Store

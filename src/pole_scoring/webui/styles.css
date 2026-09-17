@@ -5503,12 +5503,11 @@ pre {
   overflow: visible;
 }
 
-.app-shell[data-sidebar-state="collapsed"] .nav-item::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  left: calc(100% + 12px);
-  top: 50%;
-  transform: translateY(-50%) translateX(-6px);
+/* Info-bulle du menu reduit : positionnee en JS (position: fixed, hors du
+   menu) plutot qu'en ::after absolu, car le ::after etait coupe par
+   overflow-x: hidden sur .sidebar (necessaire a son ascenseur vertical). */
+.sidebar-floating-tooltip {
+  position: fixed;
   opacity: 0;
   pointer-events: none;
   white-space: nowrap;
@@ -5519,11 +5518,11 @@ pre {
   border: 1px solid rgba(22, 54, 90, 0.14);
   box-shadow: 0 14px 28px rgba(15, 35, 68, 0.18);
   transition: opacity 150ms ease, transform 150ms ease;
-  z-index: 20;
+  transform: translateY(-50%) translateX(-6px);
+  z-index: 1000;
 }
 
-.app-shell[data-sidebar-state="collapsed"] .nav-item:hover::after,
-.app-shell[data-sidebar-state="collapsed"] .nav-item:focus-visible::after {
+.sidebar-floating-tooltip.is-visible {
   opacity: 1;
   transform: translateY(-50%) translateX(0);
 }

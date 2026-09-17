@@ -5545,10 +5545,58 @@ document.querySelector('#conductor-include-shadow-tablets')?.addEventListener('c
   }
 });
 
+// Info-bulle du menu reduit : positionnee en JS (position: fixed) plutot
+// qu'en CSS pur, pour echapper a overflow-x: hidden sur .sidebar (necessaire
+// a son ascenseur vertical) qui coupait sinon l'ancienne info-bulle ::after.
+function hideSidebarTooltip() {
+  const tooltip = document.querySelector('#sidebar-floating-tooltip');
+
+  if (!tooltip) {
+    return;
+  }
+
+  tooltip.classList.remove('is-visible');
+  tooltip.setAttribute('aria-hidden', 'true');
+}
+
+function showSidebarTooltip(navItem) {
+  const shell = document.querySelector('.app-shell');
+  const tooltip = document.querySelector('#sidebar-floating-tooltip');
+
+  if (!shell || !tooltip || shell.dataset.sidebarState !== 'collapsed') {
+    return;
+  }
+
+  const tooltipText = String(navItem.dataset.tooltip ?? '').trim();
+
+  if (!tooltipText) {
+    return;
+  }
+
+  const rect = navItem.getBoundingClientRect();
+  tooltip.textContent = tooltipText;
+  tooltip.style.top = `${rect.top + (rect.height / 2)}px`;
+  tooltip.style.left = `${rect.right + 12}px`;
+  tooltip.classList.add('is-visible');
+  tooltip.removeAttribute('aria-hidden');
+}
+
+document.querySelectorAll('#sidebar .nav-item').forEach((navItem) => {
+  navItem.addEventListener('mouseenter', () => showSidebarTooltip(navItem));
+  navItem.addEventListener('mouseleave', hideSidebarTooltip);
+  navItem.addEventListener('focus', () => showSidebarTooltip(navItem));
+  navItem.addEventListener('blur', hideSidebarTooltip);
+  navItem.addEventListener('click', hideSidebarTooltip);
+});
+
+document.querySelector('#sidebar')?.addEventListener('scroll', hideSidebarTooltip);
+window.addEventListener('resize', hideSidebarTooltip);
+
 document.querySelector('#sidebar-toggle').addEventListener('click', () => {
   const shell = document.querySelector('.app-shell');
   const isExpanded = shell.dataset.sidebarState !== 'collapsed';
   shell.dataset.sidebarState = isExpanded ? 'collapsed' : 'expanded';
+  hideSidebarTooltip();
 });
 
 document.querySelector('#competition-form').addEventListener('submit', async (event) => {

@@ -177,6 +177,20 @@ l'application installée répond, et désinstallation silencieuse via
 l'uninstaller généré — sans rien laisser derrière (dossier, raccourcis
 Bureau/menu Démarrer, entrée de registre).
 
+### Correctif post-Phase 6 : info-bulles du menu réduit
+
+Bug historique (pas introduit par le portage) remonté par l'utilisateur en
+testant la version Python : en mode menu réduit, l'info-bulle de chaque
+icône était coupée par `overflow-x: hidden` sur `.sidebar` (nécessaire à son
+ascenseur vertical). Porté depuis `app_pole` (commit `50f6301`) :
+resynchronisation de `webui/app.js`, `webui/index.html` et `webui/styles.css`
+— l'info-bulle est désormais un élément unique positionné en JS
+(`position: fixed`, coordonnées via `getBoundingClientRect()`), qui échappe
+au découpage de la sidebar. Aucun changement backend, correctif 100 %
+frontend. Revalidé avec un navigateur piloté (Playwright) sur le backend
+Python : résultat identique à la version Node, info-bulles entièrement
+visibles à toutes les hauteurs du menu.
+
 ### Correctif post-Phase 6 : bouton "Libérer les tablettes"
 
 Cas réel remonté en compétition (prestation interrompue en cours de notation
