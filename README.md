@@ -177,6 +177,28 @@ l'application installée répond, et désinstallation silencieuse via
 l'uninstaller généré — sans rien laisser derrière (dossier, raccourcis
 Bureau/menu Démarrer, entrée de registre).
 
+### Correctif post-Phase 6 : bouton "Libérer les tablettes"
+
+Cas réel remonté en compétition (prestation interrompue en cours de notation
+tablette) : fermer la fenêtre tablet-recap sans cliquer "Valider" laissait le
+passage actif bloqué côté serveur, sans signal visible, empêchant l'envoi du
+passage suivant. Porté depuis `app_pole` (version Node, commit `df0efde`) :
+bandeau + bouton "Libérer les tablettes" dans la vue Conducteur
+(`#conductor-active-summary`), qui relit l'état serveur avant d'agir, ferme
+la fenêtre tablet-recap si elle est encore ouverte, remet le toggle Manuel/
+Tablettes du compétiteur à Manuel, et permet d'envoyer un nouveau passage
+immédiatement.
+
+Aucun changement backend nécessaire : `services/presenter.py::finalize_presenter_active_passage`
+avait déjà été porté fidèlement en Phase 4 avec le même comportement que côté
+Node (aucune exigence que les juges aient terminé pour libérer le passage).
+Seuls `webui/app.js` et `webui/styles.css` ont été resynchronisés avec
+`app_pole/public/` (diff vérifié : uniquement ce correctif, rien d'autre
+n'avait divergé entre les deux copies du frontend). Revalidé de bout en bout
+avec un navigateur piloté (Playwright, captures d'écran), sur le backend
+Python cette fois : bandeau affiché, libération, fermeture automatique de la
+popup, toggle et bandeau revenus à l'état initial.
+
 ### Détail Phase 5
 
 Portés : export PDF (pilotage d'Edge/Chrome headless installé sur le poste,

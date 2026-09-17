@@ -180,7 +180,8 @@ function createConductorState() {
     dispatchModes: {},
     validatedPassages: {},
     manualBatchSelections: {},
-    presenterActivePassageId: ''
+    presenterActivePassageId: '',
+    activeRecapPopup: null
   };
 }
 
@@ -539,6 +540,8 @@ window.addEventListener('message', (event) => {
     if (competitorId) {
       setConductorPassageValidated(payload.competitionId, competitorId, false);
     }
+
+    conductorState.activeRecapPopup = null;
   }
 
   const openCategoriesState = getOpenConductorCategories();
@@ -4097,10 +4100,63 @@ function renderConductorSection(activeCompetition, competitors, options = {}, sc
 
   syncConductorStateForCompetition(activeCompetition.id);
 
+  const presenterActiveCompetitorId = String(conductorState.presenterActivePassageId ?? '').trim();
+  const presenterActiveCompetitor = presenterActiveCompetitorId
+    ? competitors.find((competitor) => String(competitor.id ?? '').trim() === presenterActiveCompetitorId) ?? null
+    : null;
+
   summaryRoot.innerHTML = `
     <strong>${escapeHtml(activeCompetition.name)}</strong>
     <p>${escapeHtml(formatFrenchDate(activeCompetition.eventDate))} • ${escapeHtml(activeCompetition.location || 'Lieu non défini')}</p>
+    ${presenterActiveCompetitor ? `
+      <div class="conductor-tablet-release-banner">
+        <p>Passage actif sur tablettes : <strong>N° ${escapeHtml(String(presenterActiveCompetitor.runningOrder || '-'))} · ${escapeHtml(formatCompetitorAthleteLabel(presenterActiveCompetitor))}</strong></p>
+        <button type="button" class="ghost-button conductor-release-button" data-conductor-action="release-tablets">Libérer les tablettes</button>
+      </div>
+    ` : ''}
   `;
+
+  const releaseTabletsButton = summaryRoot.querySelector('[data-conductor-action="release-tablets"]');
+
+  if (releaseTabletsButton) {
+    releaseTabletsButton.addEventListener('click', async () => {
+      releaseTabletsButton.disabled = true;
+      releaseTabletsButton.textContent = 'Libération...';
+
+      try {
+        const freshPresenterState = await request('/api/presenter/state');
+        const activePassage = freshPresenterState?.activePassage ?? null;
+
+        if (activePassage?.id) {
+          await request('/api/presenter/finalize', {
+            method: 'POST',
+            body: JSON.stringify({
+              competitionId: activePassage.competitionId,
+              competitorId: activePassage.id
+            })
+          });
+
+          setConductorPassageValidated(activePassage.competitionId, activePassage.id, false);
+          setConductorDispatchMode(activePassage.id, 'manual');
+        }
+
+        if (conductorState.activeRecapPopup && !conductorState.activeRecapPopup.closed) {
+          conductorState.activeRecapPopup.close();
+        }
+        conductorState.activeRecapPopup = null;
+        conductorState.presenterActivePassageId = '';
+
+        showToast('Tablettes libérées. Vous pouvez envoyer un nouveau passage.', 'success');
+
+        const openCategoriesState = getOpenConductorCategories();
+        renderConductorSection(activeCompetition, competitors, { openCategories: openCategoriesState }, scoresMap, judgingStateMap, scoreSummaryMap);
+      } catch (error) {
+        showToast(error.message, 'error');
+        releaseTabletsButton.disabled = false;
+        releaseTabletsButton.textContent = 'Libérer les tablettes';
+      }
+    });
+  }
 
   if (!competitors.length) {
     progressValue.textContent = '0 / 0';
@@ -4348,6 +4404,9 @@ function renderConductorSection(activeCompetition, competitors, options = {}, sc
               competitorId
             })
           });
+
+          conductorState.activeRecapPopup = recapPopup;
+          conductorState.presenterActivePassageId = competitorId;
         } else {
           const popup = openManualScoringWindow({
             competitionId: activeCompetition.id,

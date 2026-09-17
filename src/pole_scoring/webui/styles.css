@@ -4572,6 +4572,46 @@ button:active:not(:disabled),
   white-space: nowrap;
 }
 
+.conductor-tablet-release-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(255, 176, 59, 0.22), rgba(255, 138, 59, 0.16));
+  border: 1px solid rgba(196, 120, 15, 0.35);
+}
+
+.conductor-tablet-release-banner p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text);
+}
+
+.conductor-release-button {
+  min-height: 34px;
+  padding: 0 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  color: #7a3b00;
+  background: linear-gradient(135deg, #ffb03b, #ff8a3b);
+  border: 1px solid rgba(196, 120, 15, 0.45);
+}
+
+.conductor-release-button:hover:not(:disabled),
+.conductor-release-button:focus-visible {
+  filter: brightness(1.05);
+  box-shadow: 0 10px 22px rgba(196, 120, 15, 0.28);
+}
+
+.conductor-release-button:disabled {
+  opacity: 0.7;
+}
+
 .conductor-action-disabled-note {
   display: inline-flex;
   align-items: center;
