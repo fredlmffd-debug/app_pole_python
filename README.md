@@ -42,7 +42,8 @@ entry_point.py     point d'entrée PyInstaller (hors package, cf. Phase 6)
 pole-scoring.spec  spec PyInstaller (mode onedir)
 resources/         icône .ico
 installer/         script Inno Setup (.iss) + icône
-scripts/           build-portable.ps1 (PyInstaller), build-installer.ps1 (+ Inno Setup)
+scripts/           build-portable.ps1 (PyInstaller), build-installer.ps1 (+ Inno Setup),
+                   import-node-database.ps1 (copier les vraies données Node pour tester)
 ```
 
 ## Développement
@@ -52,6 +53,39 @@ python -m venv .venv
 .venv\Scripts\pip install -e .
 $env:POLE_SCORING_DATA_DIR = "$PWD\data"
 .venv\Scripts\python -m pole_scoring
+```
+
+### Travailler avec les vraies données (celles de la version Node)
+
+Pour tester la version Python avec les compétitions/juges/compétiteurs déjà
+existants côté Node, plutôt que copier le fichier `.sqlite` à la main
+(risque d'incohérence si Node écrit pendant la copie) :
+
+```powershell
+# 1. Démarrer la version Python sur un port isolé, base vide
+$env:APP_PORT = "4390"
+$env:POLE_SCORING_DATA_DIR = "$PWD\data-test"
+.venv\Scripts\python -m pole_scoring
+
+# 2. Dans un autre terminal, une fois les deux apps demarrees (Node sur son
+#    port habituel, Python sur 4390) :
+powershell -ExecutionPolicy Bypass -File scripts\import-node-database.ps1
+```
+
+Le script s'appuie sur les routes `/api/db/export` (Node) et `/api/db/import`
+(Python) déjà en place et testées en Phase 5 — `export` fait un checkpoint
+WAL puis renvoie un instantané cohérent du fichier, même pendant que Node
+tourne et écrit ; `import` **remplace entièrement** la base cible. Aucun
+risque pour la base Node : l'export est une opération de lecture (le
+checkpoint WAL est une opération de maintenance normale et sans danger),
+rien n'est jamais écrit côté Node.
+
+Par défaut le script part de `http://127.0.0.1:4380` (Node) vers
+`http://127.0.0.1:4390` (Python) ; à ajuster avec `-NodeUrl`/`-PythonUrl` si
+besoin, par exemple :
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\import-node-database.ps1 -PythonUrl "http://127.0.0.1:4391"
 ```
 
 ## Tests
