@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import socket
 import threading
 import time
@@ -9,6 +10,7 @@ import webview
 
 from .app import create_app
 from .config import APP_HOST, APP_PORT, DATA_DIR
+from .desktop_api import DesktopApi
 
 
 def _run_server() -> None:
@@ -34,12 +36,19 @@ def main() -> None:
     server_thread.start()
     _wait_for_server(APP_HOST, APP_PORT)
 
+    # Debug distant WebView2 optionnel (developpement uniquement), pour piloter
+    # la vraie fenetre native avec des outils type Playwright/CDP.
+    remote_debug_port = os.environ.get("POLE_SCORING_REMOTE_DEBUG_PORT")
+    if remote_debug_port:
+        webview.settings["REMOTE_DEBUGGING_PORT"] = int(remote_debug_port)
+
     webview.create_window(
         "Pole Scoring",
         f"http://127.0.0.1:{APP_PORT}/",
         width=1280,
         height=800,
         min_size=(1024, 700),
+        js_api=DesktopApi(),
     )
     webview.start()
 

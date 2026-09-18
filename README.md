@@ -136,12 +136,12 @@ suivante (voir l'échange initial de conception pour le détail complet).
 - [x] Phase 4 — présentateur, résultats, statistiques
 - [x] Phase 5 — PDF, exports/archives, synchronisation inter-poste
 - [x] Phase 6 — packaging Windows (PyInstaller + Inno Setup)
-- [ ] **Phase 6bis — fenêtres popup multiples (tablet-recap, saisie manuelle...) : à corriger en priorité, voir ci-dessous**
+- [x] Phase 6bis — fenêtres popup multiples (tablet-recap, saisie manuelle...)
 - [ ] Phase 7 — marche en parallèle, bascule finale
 - [ ] Phase 8 — refonte du fonctionnement des grilles de notation (à planifier)
 - [ ] Phase 9 — étude de faisabilité : synchronisation automatique de la base locale (à planifier)
 
-### Phase 6bis (à corriger en priorité — bloquant pour valider l'usage réel)
+### Phase 6bis
 
 Remonté par l'utilisateur en testant : envoyer un passage aux tablettes
 depuis le Conducteur affiche "le navigateur a bloqué une fenêtre" et la
@@ -181,21 +181,37 @@ fiable malgré ça, car il relit toujours l'état réel depuis
 Seule la fermeture automatique de la popup ne fonctionnerait pas dans ce
 cas précis.
 
-**Piste de correctif (à valider avant implémentation)**, concerne
-uniquement `webui/` (pas `app_pole/public/`, qui n'a pas ce problème) :
-1. Exposer une petite API Python à la fenêtre principale via le paramètre
-   `js_api` de `webview.create_window()` dans `__main__.py`, avec une
-   méthode type `open_window(url, name, width, height)` qui appelle
-   `webview.create_window(...)` côté Python pour créer une vraie fenêtre
-   native indépendante (pas de blocage de la fenêtre principale).
-2. Dans `openDedicatedWindow()` (`webui/app.js`), détecter `window.pywebview`
-   et appeler cette API à la place de `window.open()` quand elle est
-   disponible (comportement Node/navigateur inchangé sinon — divergence
-   volontaire et documentée entre `webui/app.js` et `public/app.js`).
-3. Remplacer la synchronisation par `postMessage` (qui ne fonctionnera plus
-   pour ces fenêtres) par un sondage périodique de l'API côté tableau de
-   bord (`/api/presenter/state`, etc.) — plus robuste de toute façon, dans
-   le même esprit que "Libérer les tablettes".
+**Correctif implémenté**, concerne uniquement `webui/` (pas
+`app_pole/public/`, qui n'a pas ce problème — divergence volontaire et
+documentée) :
+1. `desktop_api.py` (nouveau) : classe `DesktopApi` exposée à la fenêtre
+   principale via `js_api=` dans `__main__.py`, avec `open_window(url, name,
+   width, height)` qui appelle `webview.create_window(...)` côté Python pour
+   créer une vraie fenêtre native indépendante, et `close_window(name)` pour
+   la fermer à la demande. Les fenêtres ouvertes sont suivies dans un
+   dictionnaire (par `name`) pour réutiliser/refocaliser une fenêtre déjà
+   ouverte plutôt que d'en dupliquer une.
+2. `openDedicatedWindow()` (`webui/app.js`) détecte `window.pywebview.api.open_window`
+   et l'utilise à la place de `window.open()` quand disponible ; un objet
+   `{ closed, focus(), close() }` minimal est renvoyé pour rester compatible
+   avec le code existant (`conductorState.activeRecapPopup`, etc.).
+   Comportement Node/navigateur strictement inchangé sinon.
+3. `ensureConductorTabletSyncPolling()` (`webui/app.js`) : sondage de
+   `/api/presenter/state` toutes les 3 secondes sur la vue Conducteur,
+   actif uniquement quand `window.pywebview` est présent (compense la perte
+   de `postMessage` sans rien changer pour Node, où `postMessage` continue
+   de fonctionner instantanément).
+
+**Validé sur la vraie fenêtre pywebview**, pas seulement via un navigateur
+headless classique (qui ne peut pas reproduire ce bug, propre à
+l'interception WebView2) : `POLE_SCORING_REMOTE_DEBUG_PORT` (nouvelle
+variable d'env, dev uniquement) active `webview.settings['REMOTE_DEBUGGING_PORT']`,
+ce qui permet de piloter la vraie fenêtre native avec Playwright via
+`chromium.connectOverCDP(...)`. Confirmé ainsi : la fenêtre tablet-recap
+s'ouvre comme une vraie fenêtre native (plus de bascule vers Edge), la
+fenêtre principale reste pleinement utilisable pendant ce temps (navigation
+testée en direct), le bandeau "Libérer les tablettes" s'affiche
+correctement, et le bouton ferme bien la vraie fenêtre native.
 
 ### Phase 8 (à planifier plus tard)
 

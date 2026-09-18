@@ -133,6 +133,7 @@ let storageState = {
   dbFile: ''
 };
 let conductorPresenceRefreshTimer = null;
+let conductorTabletSyncTimer = null;
 let accessDialogMandatory = false;
 let accessRecoveryDialogResolver = null;
 let accessRecoveryDialogActiveElement = null;
@@ -140,6 +141,7 @@ let forcePasswordDialogResolver = null;
 let forcePasswordDialogActiveElement = null;
 let conductorIncludeShadowTabletJudges = false;
 const CONDUCTOR_PRESENCE_REFRESH_MS = 10_000;
+const CONDUCTOR_TABLET_SYNC_REFRESH_MS = 3_000;
 
 // Etat global: ces fabriques centralisent les valeurs par defaut des sous-modules UI.
 
@@ -277,7 +279,42 @@ function clearConductorManualBatchSelections() {
 
 // Fenetres dediees a la saisie manuelle et au classement categorie.
 
+// Dans l'application desktop (pywebview), window.open() est intercepte par
+// le backend WebView2 et redirige vers le navigateur systeme plutot que
+// d'ouvrir une fenetre de l'application (cf. README, "Phase 6bis") : on
+// passe alors par l'API Python exposee en js_api, qui ouvre une vraie
+// fenetre pywebview independante. Comportement navigateur/Node inchange
+// sinon (divergence volontaire entre webui/app.js et public/app.js).
+function isPywebviewHost() {
+  return Boolean(window.pywebview && window.pywebview.api && typeof window.pywebview.api.open_window === 'function');
+}
+
+function createPywebviewWindowHandle(windowName) {
+  return {
+    closed: false,
+    focus() {},
+    close() {
+      if (this.closed) {
+        return;
+      }
+
+      this.closed = true;
+      window.pywebview.api.close_window(windowName).catch(() => {});
+    }
+  };
+}
+
 function openDedicatedWindow({ url, windowName, popupWidth, popupHeight }) {
+  if (isPywebviewHost()) {
+    const absoluteUrl = new URL(url, window.location.origin).href;
+
+    window.pywebview.api.open_window(absoluteUrl, windowName, popupWidth, popupHeight).catch((error) => {
+      console.error(`Impossible d'ouvrir la fenetre ${windowName}`, error);
+    });
+
+    return createPywebviewWindowHandle(windowName);
+  }
+
   const left = Math.max(0, Math.round(window.screenX + ((window.outerWidth - popupWidth) / 2)));
   const top = Math.max(0, Math.round(window.screenY + ((window.outerHeight - popupHeight) / 2)));
   const features = `popup=yes,width=${popupWidth},height=${popupHeight},left=${left},top=${top},resizable=yes,scrollbars=yes`;
@@ -4605,6 +4642,42 @@ function ensureConductorJudgePresencePolling() {
   }, CONDUCTOR_PRESENCE_REFRESH_MS);
 }
 
+// Dans l'application desktop (pywebview), les fenetres ouvertes via l'API
+// open_window() n'ont pas de window.opener : les messages postMessage
+// (tablet-recap-closed/finalized, manual-scoring-saved/closed...) ne
+// parviennent donc jamais au tableau de bord. On compense par un sondage
+// leger, actif uniquement dans ce contexte (cf. README, "Phase 6bis") — le
+// comportement navigateur/Node (postMessage instantane) reste inchange.
+function ensureConductorTabletSyncPolling() {
+  if (conductorTabletSyncTimer || !isPywebviewHost()) {
+    return;
+  }
+
+  conductorTabletSyncTimer = window.setInterval(async () => {
+    if (document.visibilityState === 'hidden' || activeSection !== 'conductor') {
+      return;
+    }
+
+    const competitionId = String(conductorState.activeCompetitionId ?? '').trim();
+
+    if (!competitionId) {
+      return;
+    }
+
+    const activeCompetition = competitionsState.find((competition) => competition.id === competitionId) ?? null;
+
+    if (!activeCompetition) {
+      return;
+    }
+
+    try {
+      const openCategoriesState = getOpenConductorCategories();
+      await refreshConductorSection(activeCompetition, { openCategories: openCategoriesState });
+    } catch {
+    }
+  }, CONDUCTOR_TABLET_SYNC_REFRESH_MS);
+}
+
 // Vue conducteur: regroupement par categorie, controle d'envoi et saisie manuelle.
 
 async function refreshConductorSection(activeCompetition, options = {}) {
@@ -6965,6 +7038,7 @@ async function ensureAccessLoginAtStartup() {
 }
 
 ensureConductorJudgePresencePolling();
+ensureConductorTabletSyncPolling();
 
 setCompetitionMode('create');
 
