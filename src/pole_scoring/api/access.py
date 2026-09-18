@@ -64,13 +64,13 @@ async def change_password(request: Request, db: Database = Depends(get_database)
 
 @router.get("/accounts")
 def list_accounts(request: Request, db: Database = Depends(get_database)) -> list[dict]:
-    require_access_account(request, db, ["super_admin"])
+    require_access_account(request, db, ["admin"])
     return access_service.list_access_accounts(db)
 
 
 @router.post("/accounts", status_code=201)
 async def create_account(request: Request, db: Database = Depends(get_database)) -> dict:
-    require_access_account(request, db, ["super_admin"])
+    require_access_account(request, db, ["admin"])
     body = await request.json()
     return access_service.create_access_account(
         db,
@@ -78,13 +78,13 @@ async def create_account(request: Request, db: Database = Depends(get_database))
         last_name=require_string(body.get("lastName"), "lastName"),
         login=require_string(body.get("login"), "login"),
         password=require_string(body.get("password"), "password"),
-        role=body.get("role") if isinstance(body.get("role"), str) else "admin",
+        role=body.get("role") if isinstance(body.get("role"), str) else "scrutateur",
     )
 
 
 @router.put("/accounts/{account_id}")
 async def update_account(account_id: str, request: Request, db: Database = Depends(get_database)) -> dict:
-    require_access_account(request, db, ["super_admin"])
+    require_access_account(request, db, ["admin"])
     body = await request.json()
     return access_service.update_access_account(
         db,
@@ -93,31 +93,31 @@ async def update_account(account_id: str, request: Request, db: Database = Depen
         last_name=require_string(body.get("lastName"), "lastName"),
         login=require_string(body.get("login"), "login"),
         password=body.get("password") if isinstance(body.get("password"), str) else "",
-        role=body.get("role") if isinstance(body.get("role"), str) else "admin",
+        role=body.get("role") if isinstance(body.get("role"), str) else "scrutateur",
         is_active=body.get("isActive"),
     )
 
 
 @router.delete("/accounts/{account_id}")
 def delete_account(account_id: str, request: Request, db: Database = Depends(get_database)) -> dict:
-    require_access_account(request, db, ["super_admin"])
+    require_access_account(request, db, ["admin"])
     return access_service.delete_access_account(db, account_id)
 
 
 @router.get("/accounts/{account_id}/recovery-codes")
 def get_recovery_codes(account_id: str, request: Request, db: Database = Depends(get_database)) -> list[dict]:
-    require_access_account(request, db, ["super_admin"])
+    require_access_account(request, db, ["admin"])
     return access_service.list_access_recovery_codes(db, account_id)
 
 
 @router.post("/accounts/{account_id}/recovery-codes/regenerate")
 async def regenerate_recovery_codes(account_id: str, request: Request, db: Database = Depends(get_database)) -> dict:
-    require_access_account(request, db, ["super_admin"])
+    require_access_account(request, db, ["admin"])
     body = await request.json()
     return access_service.generate_access_recovery_codes(db, account_id=account_id, count=body.get("count"))
 
 
 @router.post("/accounts/{account_id}/recovery-codes/revoke")
 def revoke_recovery_codes(account_id: str, request: Request, db: Database = Depends(get_database)) -> dict:
-    require_access_account(request, db, ["super_admin"])
+    require_access_account(request, db, ["admin"])
     return access_service.revoke_access_recovery_codes(db, account_id)

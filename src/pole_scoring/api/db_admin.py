@@ -35,7 +35,7 @@ async def import_database(request: Request, db: Database = Depends(get_database)
 
 @router.post("/archive")
 async def archive_database(request: Request, db: Database = Depends(get_database)) -> dict:
-    require_access_account(request, db, ["super_admin"])
+    require_access_account(request, db, ["admin"])
     body = await request.json()
     return db_maintenance.archive_competitions_by_season(
         db, keep_seasons=body.get("keepSeasons"), purge=body.get("purge") is not False
@@ -44,13 +44,13 @@ async def archive_database(request: Request, db: Database = Depends(get_database
 
 @router.get("/archives")
 def list_archives(request: Request, db: Database = Depends(get_database)) -> list[dict]:
-    require_access_account(request, db, ["super_admin"])
+    require_access_account(request, db, ["admin"])
     return db_maintenance.list_database_archives(db)
 
 
 @router.get("/archive/download")
 def download_archive(request: Request, db: Database = Depends(get_database)) -> Response:
-    require_access_account(request, db, ["super_admin"])
+    require_access_account(request, db, ["admin"])
     file_name = require_string(request.query_params.get("name"), "name")
     exported = db_maintenance.export_database_archive(db, file_name)
     return _sqlite_attachment_response(exported["fileName"], exported["content"])
@@ -58,6 +58,6 @@ def download_archive(request: Request, db: Database = Depends(get_database)) -> 
 
 @router.post("/archive/restore")
 async def restore_archive(request: Request, db: Database = Depends(get_database)) -> dict:
-    require_access_account(request, db, ["super_admin"])
+    require_access_account(request, db, ["admin"])
     binary = await request.body()
     return db_maintenance.restore_database_archive(db, binary)

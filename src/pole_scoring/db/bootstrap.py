@@ -17,6 +17,7 @@ from ..services.scores import refresh_all_competitor_score_summaries
 from ..services.scoring_grids import ensure_default_scoring_grids
 from ..utils.time import now
 from .connection import Database
+from .settings import get_setting, set_setting
 
 
 def _backfill_competitor_members(db: Database) -> None:
@@ -91,7 +92,18 @@ def _backfill_competition_defaults(db: Database) -> None:
         )
 
 
+def _migrate_access_roles(db: Database) -> None:
+    if get_setting(db, "access_role_migration_v1") == "done":
+        return
+
+    db.execute("UPDATE access_accounts SET role = 'scrutateur' WHERE role = 'admin'")
+    db.execute("UPDATE access_accounts SET role = 'admin' WHERE role = 'super_admin'")
+    db.execute("UPDATE access_accounts SET role = 'scrutateur' WHERE role = 'presenter'")
+    set_setting(db, "access_role_migration_v1", "done")
+
+
 def run_startup_tasks(db: Database) -> None:
+    _migrate_access_roles(db)
     _backfill_competitor_members(db)
     _backfill_competition_defaults(db)
     ensure_default_scoring_grids(db)

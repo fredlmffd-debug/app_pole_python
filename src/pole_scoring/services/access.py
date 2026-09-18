@@ -15,12 +15,12 @@ from ..utils.security import (
 )
 from ..utils.time import now
 
-ACCESS_ROLES = {"super_admin", "admin", "presenter"}
+ACCESS_ROLES = {"admin", "scrutateur"}
 
 
 def normalize_access_role(value: str | None) -> str:
     normalized_value = str(value or "").strip().lower()
-    return normalized_value if normalized_value in ACCESS_ROLES else "admin"
+    return normalized_value if normalized_value in ACCESS_ROLES else "scrutateur"
 
 
 def normalize_access_login(value: str | None) -> str:
@@ -66,10 +66,9 @@ def list_access_accounts(db: Database) -> list[dict]:
                updated_at AS updatedAt
         FROM access_accounts
         ORDER BY CASE role
-          WHEN 'super_admin' THEN 0
-          WHEN 'admin' THEN 1
-          WHEN 'presenter' THEN 2
-          ELSE 3
+          WHEN 'admin' THEN 0
+          WHEN 'scrutateur' THEN 1
+          ELSE 2
         END, last_name, first_name, login
         """
     )
@@ -182,7 +181,7 @@ def invalidate_access_session(db: Database, token: str | None) -> bool:
 
 
 def create_access_account(
-    db: Database, *, first_name: str, last_name: str, login: str, password: str, role: str = "admin"
+    db: Database, *, first_name: str, last_name: str, login: str, password: str, role: str = "scrutateur"
 ) -> dict:
     normalized_login = normalize_access_login(login)
     normalized_first_name = str(first_name or "").strip()
@@ -271,21 +270,21 @@ def update_access_account(
     has_password_change = bool(str(password or "").strip())
     next_password_hash = hash_password(password) if has_password_change else existing["passwordHash"]
 
-    if existing["role"] == "super_admin" and next_role != "super_admin":
+    if existing["role"] == "admin" and next_role != "admin":
         remaining = db.query_one(
-            "SELECT COUNT(*) AS count FROM access_accounts WHERE role = 'super_admin' AND is_active = 1 AND id <> ?",
+            "SELECT COUNT(*) AS count FROM access_accounts WHERE role = 'admin' AND is_active = 1 AND id <> ?",
             (account_id,),
         )["count"]
         if remaining == 0:
-            raise ValueError("Au moins un super-admin doit rester actif")
+            raise ValueError("Au moins un administrateur doit rester actif")
 
-    if existing["role"] == "super_admin" and not next_is_active:
+    if existing["role"] == "admin" and not next_is_active:
         remaining_active = db.query_one(
-            "SELECT COUNT(*) AS count FROM access_accounts WHERE role = 'super_admin' AND is_active = 1 AND id <> ?",
+            "SELECT COUNT(*) AS count FROM access_accounts WHERE role = 'admin' AND is_active = 1 AND id <> ?",
             (account_id,),
         )["count"]
         if remaining_active == 0:
-            raise ValueError("Au moins un super-admin doit rester actif")
+            raise ValueError("Au moins un administrateur doit rester actif")
 
     with db.transaction():
         db.execute(
@@ -321,13 +320,13 @@ def delete_access_account(db: Database, account_id: str) -> dict:
     if existing is None:
         raise ValueError("Compte introuvable")
 
-    if existing["role"] == "super_admin":
+    if existing["role"] == "admin":
         remaining = db.query_one(
-            "SELECT COUNT(*) AS count FROM access_accounts WHERE role = 'super_admin' AND is_active = 1 AND id <> ?",
+            "SELECT COUNT(*) AS count FROM access_accounts WHERE role = 'admin' AND is_active = 1 AND id <> ?",
             (account_id,),
         )["count"]
         if remaining == 0:
-            raise ValueError("Au moins un super-admin doit rester actif")
+            raise ValueError("Au moins un administrateur doit rester actif")
 
     with db.transaction():
         db.execute("DELETE FROM access_sessions WHERE access_account_id = ?", (account_id,))
@@ -527,7 +526,7 @@ def bootstrap_super_admin_access_account(
         raise ValueError("Les comptes d'accès existent déjà")
 
     account = create_access_account(
-        db, first_name=first_name, last_name=last_name, login=login, password=password, role="super_admin"
+        db, first_name=first_name, last_name=last_name, login=login, password=password, role="admin"
     )
 
     return create_access_session(db, account["id"])

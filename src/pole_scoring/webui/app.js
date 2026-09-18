@@ -69,9 +69,9 @@ const sectionMeta = {
     title: 'Résultats & Statistiques',
     subtitle: 'Analyse des notes, passages et tendances de compétition.'
   },
-  settings: { 
+  settings: {
     kicker: 'Administration',
-    title: 'Paramétrages',
+    title: 'Administration',
     subtitle: ''
   },
   sync: {
@@ -621,12 +621,10 @@ function setAccessSessionToken(token) {
 
 function getAccessRoleLabel(role) {
   switch (role) {
-    case 'super_admin':
-      return 'Admin';
     case 'admin':
+      return 'Administrateur';
+    case 'scrutateur':
       return 'Scrutateur';
-    case 'presenter':
-      return 'Présentateur';
     default:
       return 'Compte';
   }
@@ -679,19 +677,19 @@ async function logoutAccessSession({ keepSession = false } = {}) {
 }
 
 function canCurrentUserAccessSettings() {
-  return accessState.currentAccount?.role === 'super_admin';
+  return accessState.currentAccount?.role === 'admin';
 }
 
 function canCurrentUserManageAccess() {
-  return accessState.currentAccount?.role === 'super_admin';
+  return accessState.currentAccount?.role === 'admin';
 }
 
 function canCurrentUserManageArchive() {
-  return accessState.currentAccount?.role === 'super_admin';
+  return accessState.currentAccount?.role === 'admin';
 }
 
 function canCurrentUserEditCriteria() {
-  return accessState.currentAccount?.role === 'super_admin';
+  return accessState.currentAccount?.role === 'admin';
 }
 
 function canCurrentUserAccessSection(section) {
@@ -705,16 +703,12 @@ function canCurrentUserAccessSection(section) {
     return section === 'dashboard';
   }
 
-  if (role === 'super_admin') {
+  if (role === 'admin') {
     return true;
   }
 
-  if (role === 'admin') {
+  if (role === 'scrutateur') {
     return section !== 'settings';
-  }
-
-  if (role === 'presenter') {
-    return section === 'dashboard';
   }
 
   return section === 'dashboard';
@@ -746,8 +740,8 @@ async function openSettingsAfterAuthentication(session, mode) {
     return;
   }
 
-  if (session.account.role !== 'super_admin') {
-    showToast('Accès réservé à l\'admin.', 'error');
+  if (session.account.role !== 'admin') {
+    showToast('Accès réservé à l\'administrateur.', 'error');
     return;
   }
 
@@ -757,7 +751,7 @@ async function openSettingsAfterAuthentication(session, mode) {
   await refresh();
   setActiveSection('settings');
 
-  if (session.account.role === 'super_admin') {
+  if (session.account.role === 'admin') {
     openScoringSettingsPanel('criteria');
     return;
   }
@@ -920,7 +914,7 @@ function setActiveSection(section) {
   }
 
   if (nextSection === 'settings') {
-    scoringSettingsState.panel = accessState.currentAccount?.role === 'super_admin' ? 'access' : '';
+    scoringSettingsState.panel = accessState.currentAccount?.role === 'admin' ? 'access' : '';
     accessState.settingsAction = 'create';
     resetAccessAccountForm();
     renderScoringSettings();
@@ -1763,9 +1757,9 @@ function openAccessAuthDialog(mode = 'login', options = {}) {
 
   titleElement.textContent = accessDialogMode === 'bootstrap'
     ? 'Créer le premier admin'
-    : (accessDialogMandatory ? 'Connexion requise au démarrage' : 'Se connecter aux paramétrages');
+    : (accessDialogMandatory ? 'Connexion requise au démarrage' : 'Se connecter à l\'administration');
   messageElement.textContent = accessDialogMode === 'bootstrap'
-    ? 'Aucun compte d\'accès n\'existe encore. Créez le premier admin pour ouvrir les paramétrages.'
+    ? 'Aucun compte d\'accès n\'existe encore. Créez le premier admin pour ouvrir l\'administration.'
     : (accessDialogMandatory
       ? 'Identifiez-vous pour ouvrir l\'application et charger vos droits.'
       : 'Identifiez-vous avec votre login et votre mot de passe.');
@@ -5055,7 +5049,7 @@ function resetAccessAccountForm() {
   document.querySelector('#settings-access-last-name').value = '';
   document.querySelector('#settings-access-login').value = '';
   document.querySelector('#settings-access-password').value = '';
-  document.querySelector('#settings-access-role').value = 'admin';
+  document.querySelector('#settings-access-role').value = 'scrutateur';
   document.querySelector('#settings-access-active').value = 'true';
   document.querySelector('#settings-access-save').textContent = 'Créer le compte';
   renderAccessRecoveryOutput('');
@@ -5069,7 +5063,7 @@ function fillAccessAccountForm(account) {
   document.querySelector('#settings-access-last-name').value = account?.lastName ?? '';
   document.querySelector('#settings-access-login').value = account?.login ?? '';
   document.querySelector('#settings-access-password').value = '';
-  document.querySelector('#settings-access-role').value = account?.role ?? 'admin';
+  document.querySelector('#settings-access-role').value = account?.role ?? 'scrutateur';
   document.querySelector('#settings-access-active').value = account?.isActive === false ? 'false' : 'true';
   document.querySelector('#settings-access-save').textContent = account?.id ? 'Enregistrer les modifications' : 'Créer le compte';
 }
@@ -6334,7 +6328,7 @@ document.querySelector('#settings-access-form')?.addEventListener('submit', asyn
   const lastName = document.querySelector('#settings-access-last-name')?.value ?? '';
   const login = document.querySelector('#settings-access-login')?.value ?? '';
   const password = document.querySelector('#settings-access-password')?.value ?? '';
-  const role = document.querySelector('#settings-access-role')?.value ?? 'admin';
+  const role = document.querySelector('#settings-access-role')?.value ?? 'scrutateur';
   const isActive = document.querySelector('#settings-access-active')?.value === 'true';
 
   if (!firstName.trim() || !lastName.trim() || !login.trim()) {

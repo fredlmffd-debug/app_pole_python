@@ -360,6 +360,37 @@ avec un navigateur piloté (Playwright, captures d'écran), sur le backend
 Python cette fois : bandeau affiché, libération, fermeture automatique de la
 popup, toggle et bandeau revenus à l'état initial.
 
+### Correctif post-Phase 6 : simplification du modèle de rôles (admin/scrutateur)
+
+Demande explicite de l'utilisateur : ne garder que 2 rôles d'accès —
+**Administrateur** (accès total) et **Scrutateur** (tout sauf
+"Administration", ex-"Paramétrages"). Porté depuis `app_pole` (version Node)
+: le rôle `presenter` est supprimé (confirmé sans risque — `presenter.html`
+n'a jamais requis d'authentification, `/api/presenter/*` ne vérifie aucune
+session), et les valeurs internes `super_admin`/`admin` sont renommées
+`admin`/`scrutateur` (`services/access.py`, `api/access.py`,
+`api/db_admin.py`, `api/scoring.py`, `webui/app.js`, `webui/index.html`) —
+le menu "Administration" est aussi repositionné juste avant "Déconnexion"
+dans la sidebar.
+
+Migration des comptes existants : `db/bootstrap.py::_migrate_access_roles`,
+verrouillée par un indicateur dans `settings` (`access_role_migration_v1`)
+pour ne s'exécuter qu'une seule fois. Point important, identifié et corrigé
+côté Node avant le portage : une première version avec de simples `UPDATE
+... WHERE role = 'admin'` n'était **pas idempotente** — `'admin'` est à la
+fois une ancienne valeur (l'ex-Scrutateur) et la nouvelle valeur cible (le
+nouvel Administrateur), donc rejouer la migration au démarrage suivant
+rétrogradait les comptes déjà migrés. D'où le verrou en base plutôt qu'un
+simple `UPDATE` répété à chaque démarrage. Couvert par un test dédié
+(`tests/test_access.py::test_legacy_roles_are_migrated_once_and_idempotently`),
+qui vérifie explicitement l'absence de régression au second passage.
+
+Par sécurité, les valeurs de repli (rôle par défaut si non fourni, à la
+création d'un compte comme dans le formulaire) sont passées de `'admin'` à
+`'scrutateur'` — avant le renommage, `'admin'` désignait le rôle le moins
+privilégié ; le garder tel quel après renommage aurait accordé les pleins
+droits par défaut à tout compte créé sans rôle explicite.
+
 ### Détail Phase 5
 
 Portés : export PDF (pilotage d'Edge/Chrome headless installé sur le poste,

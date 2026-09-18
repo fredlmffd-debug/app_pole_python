@@ -71,17 +71,17 @@
             </span>
             <span class="nav-text"><strong>Résultats & Statistiques</strong><small>Analyse des résultats</small></span>
           </button>
-          <button class="nav-item" type="button" data-section="settings" data-title="Paramétrages" data-subtitle="Configuration technique des grilles et critères." data-tooltip="Paramétrages">
-            <span class="nav-icon" aria-hidden="true">
-              <img src="/assets/icons/settings.svg" alt="">
-            </span>
-            <span class="nav-text"><strong>Paramétrages</strong><small>Configuration technique - RÉSERVÉ AUX ADMINS -</small></span>
-          </button>
           <button class="nav-item" type="button" data-section="sync" data-title="Synchronisation" data-subtitle="Fusion des bases et transfert inter-postes." data-tooltip="Synchronisation">
             <span class="nav-icon" aria-hidden="true">
               <img src="/assets/icons/sync.svg" alt="">
             </span>
             <span class="nav-text"><strong>Synchronisation</strong><small>Fusion locale</small></span>
+          </button>
+          <button class="nav-item" type="button" data-section="settings" data-title="Administration" data-subtitle="Configuration technique des grilles et critères." data-tooltip="Administration">
+            <span class="nav-icon" aria-hidden="true">
+              <img src="/assets/icons/settings.svg" alt="">
+            </span>
+            <span class="nav-text"><strong>Administration</strong><small>Configuration technique - RÉSERVÉ À L'ADMINISTRATEUR -</small></span>
           </button>
           <button class="nav-item" type="button" data-nav-action="logout" data-title="Déconnexion" data-subtitle="Fermer la session et quitter proprement." data-tooltip="Déconnexion" hidden>
             <span class="nav-icon" aria-hidden="true">
@@ -497,7 +497,7 @@
           <div class="feature-card form-card settings-shell">
             <div class="section-head compact">
               <div>
-                <h3>Paramétrages techniques</h3>
+                <h3>Administration</h3>
               </div>
             </div>
             <div class="mini-card settings-db-path-card">
@@ -565,9 +565,8 @@
                   <label class="field-row field-row-condensed"><span>Mot de passe</span><input id="settings-access-password" type="password" autocomplete="new-password" placeholder="Laisser vide pour conserver"></label>
                   <label class="field-row field-row-condensed"><span>Rôle</span>
                     <select id="settings-access-role">
-                      <option value="super_admin">Admin</option>
-                      <option value="admin">Scrutateur</option>
-                      <option value="presenter">Présentateur</option>
+                      <option value="admin">Administrateur</option>
+                      <option value="scrutateur">Scrutateur</option>
                     </select>
                   </label>
                   <label class="field-row field-row-condensed"><span>Actif</span>
