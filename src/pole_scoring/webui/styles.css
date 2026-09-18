@@ -410,6 +410,21 @@ label {
   display: none !important;
 }
 
+.judge-no-active-competition {
+  margin: 6px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(255, 176, 59, 0.22), rgba(255, 138, 59, 0.16));
+  border: 1px solid rgba(196, 120, 15, 0.35);
+  color: #7a3b00;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.judge-no-active-competition[hidden] {
+  display: none;
+}
+
 .field-row > span {
   font-weight: 600;
   color: #16365a;

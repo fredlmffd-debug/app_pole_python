@@ -29,6 +29,8 @@ const judgeStorage = {
   judgeId: 'pole-scoring.judge.judgeId'
 };
 
+let singleActiveCompetitionId = '';
+
 const state = {
   competitionId: '',
   judgeId: '',
@@ -516,25 +518,6 @@ async function validateJudgeAuthForm() {
   const firstMissingField = document.querySelector(missingFields[0].selector);
   firstMissingField?.focus();
   return false;
-}
-
-function getCurrentSeasonValue() {
-  const currentDate = new Date();
-  const startYear = currentDate.getMonth() + 1 >= 9
-    ? currentDate.getFullYear()
-    : currentDate.getFullYear() - 1;
-  return `${startYear}/${startYear + 1}`;
-}
-
-function normalizeSeasonValue(value) {
-  const rawValue = String(value ?? '').trim().replace(/^saison\s+/i, '').replace(/\s+/g, '');
-  const match = rawValue.match(/^(\d{4})\/(\d{4})$/);
-
-  if (match && Number(match[2]) === Number(match[1]) + 1) {
-    return `${match[1]}/${match[2]}`;
-  }
-
-  return '';
 }
 
 function formatFrenchDate(value) {
@@ -1290,7 +1273,7 @@ async function sendJudgeLogout({ useKeepalive = false } = {}) {
 }
 
 function resetJudgeStateUi() {
-  state.competitionId = '';
+  state.competitionId = singleActiveCompetitionId;
   state.judgeId = '';
   state.judgeName = '';
   state.judgeRole = '';
@@ -1300,9 +1283,9 @@ function resetJudgeStateUi() {
   state.isConnected = false;
   state.isAuthorized = false;
 
-  document.querySelector('#judge-competition').value = '';
+  document.querySelector('#judge-competition').value = singleActiveCompetitionId;
   document.querySelector('#judge-id-hidden').value = '';
-  document.querySelector('#competition-id-hidden').value = '';
+  document.querySelector('#competition-id-hidden').value = singleActiveCompetitionId;
   document.querySelector('#judge-login').value = '';
   document.querySelector('#judge-password').value = '';
   resetDispatchForm();
@@ -1471,10 +1454,9 @@ async function refreshJudgeIdentityStatus() {
 async function bootstrap() {
   const data = await request('/api/bootstrap');
   const competitionSelect = document.querySelector('#judge-competition');
-  const currentSeason = getCurrentSeasonValue();
+  const noActiveCompetitionNotice = document.querySelector('#judge-no-active-competition');
   const availableCompetitions = (Array.isArray(data.competitions) ? data.competitions : [])
-    .filter((competition) => normalizeSeasonValue(competition?.season) === currentSeason)
-    .sort((left, right) => String(left?.eventDate ?? '').localeCompare(String(right?.eventDate ?? '')));
+    .filter((competition) => competition?.status === 'active');
   const storedJudgeId = localStorage.getItem(judgeStorage.judgeId);
 
   renderOptions(
@@ -1484,8 +1466,13 @@ async function bootstrap() {
     'Choisir la compétition'
   );
 
-  state.competitionId = '';
-  document.querySelector('#competition-id-hidden').value = '';
+  singleActiveCompetitionId = availableCompetitions.length === 1 ? availableCompetitions[0].id : '';
+  competitionSelect.value = singleActiveCompetitionId;
+  competitionSelect.disabled = availableCompetitions.length === 0;
+  noActiveCompetitionNotice.hidden = availableCompetitions.length > 0;
+
+  state.competitionId = singleActiveCompetitionId;
+  document.querySelector('#competition-id-hidden').value = state.competitionId;
 
   enforceEmptyAuthCredentialsOnOpen();
 
