@@ -88,6 +88,24 @@ besoin, par exemple :
 powershell -ExecutionPolicy Bypass -File scripts\import-node-database.ps1 -PythonUrl "http://127.0.0.1:4391"
 ```
 
+### Remettre une base à vide (hors juges/utilisateurs/grilles)
+
+Pour repartir de zéro sur les compétitions/compétiteurs/scores (données de
+test) sans perdre les comptes utilisateurs, les juges enregistrés ni les
+grilles de notation :
+
+```powershell
+.venv\Scripts\python scripts\reset-test-data.py --data-dir data-test --confirm
+```
+
+Sans `--confirm`, le script se contente d'afficher l'état des tables ciblées
+sans rien modifier. Une copie de sauvegarde horodatée du fichier `.sqlite`
+est créée juste avant la suppression (dans le même dossier). Tables vidées :
+`competitions` (cascade vers compétiteurs/scores/présences/affectations
+juges), `athletes`, `sync_events`. Tables conservées : `access_accounts`,
+`access_sessions`, `access_recovery_codes`, `judges`, `scoring_grids` (et
+leurs versions/critères), `settings`.
+
 ## Tests
 
 ```powershell
@@ -212,6 +230,28 @@ s'ouvre comme une vraie fenêtre native (plus de bascule vers Edge), la
 fenêtre principale reste pleinement utilisable pendant ce temps (navigation
 testée en direct), le bandeau "Libérer les tablettes" s'affiche
 correctement, et le bouton ferme bien la vraie fenêtre native.
+
+### Phase 7 (à préparer)
+
+Point noté par l'utilisateur le 2026-09-18 : au packaging final, l'installeur
+doit embarquer des données de démarrage pour chaque poste scrutateur — les
+**juges enregistrés** et les **comptes utilisateurs** (un accès par
+scrutateur, à créer). Les **grilles de notation n'ont pas besoin d'être
+embarquées** : elles sont déjà recréées automatiquement au premier démarrage
+par `ensure_default_scoring_grids` (`services/scoring_grids.py`), vérifié sur
+une base vierge (voir plus bas, table `reset-test-data.py`).
+
+Piste retenue à ce stade : réutiliser `scripts/reset-test-data.py` (créé le
+même jour, cf. plus bas) pour préparer, sur ce poste, une base ne contenant
+que les comptes scrutateurs finaux et les juges (plus de compétitions/scores
+de test), puis embarquer ce fichier `.sqlite` comme donnée de seed dans
+l'installeur : au premier lancement, si aucune base n'existe encore dans
+`LOCALAPPDATA`, l'application copierait ce fichier de seed au lieu de créer
+une base vide. Point d'attention : ce fichier contient des hachages de mots
+de passe des comptes scrutateurs, donc il devra rester hors du dépôt git
+(comme `data-test/`), fourni en local aux scripts de build plutôt que
+committé. Non implémenté — à faire en Phase 7, une fois les corrections et
+tests de bout en bout en cours terminés.
 
 ### Phase 8 (à planifier plus tard)
 
