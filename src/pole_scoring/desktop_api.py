@@ -41,6 +41,15 @@ class DesktopApi:
     """Expose a la fenetre principale (js_api=...) uniquement — les fenetres
     secondaires n'ont pas besoin d'en ouvrir d'autres elles-memes."""
 
+    def __init__(self) -> None:
+        # Assignee par __main__.py juste apres webview.create_window(), car
+        # l'objet Window n'existe qu'une fois la fenetre principale creee
+        # (elle-meme creee avec cette instance en js_api). Necessaire pour
+        # toggle_fullscreen() : webview.active_window() s'appuie sur
+        # WinForms.Form.ActiveForm, peu fiable depuis le thread des callbacks
+        # js_api (pas le thread UI) — mieux vaut une reference directe.
+        self.main_window: "Window | None" = None
+
     def open_window(self, url: str, name: str = "", width: object = None, height: object = None) -> bool:
         window_key = str(name or url).strip() or str(url)
 
@@ -82,6 +91,17 @@ class DesktopApi:
 
         try:
             existing.destroy()
+        except Exception:
+            return False
+
+        return True
+
+    def toggle_fullscreen(self) -> bool:
+        if self.main_window is None:
+            return False
+
+        try:
+            self.main_window.toggle_fullscreen()
         except Exception:
             return False
 

@@ -289,6 +289,18 @@ function isPywebviewHost() {
   return Boolean(window.pywebview && window.pywebview.api && typeof window.pywebview.api.open_window === 'function');
 }
 
+// F11 pour basculer en plein ecran natif (utile sur petit ecran) : la
+// fenetre pywebview s'ouvre agrandie ("maximized") par defaut mais garde
+// la barre de titre/taskbar, contrairement au plein ecran natif.
+window.addEventListener('keydown', (event) => {
+  if (event.key !== 'F11' || !isPywebviewHost() || typeof window.pywebview.api.toggle_fullscreen !== 'function') {
+    return;
+  }
+
+  event.preventDefault();
+  window.pywebview.api.toggle_fullscreen().catch(() => {});
+});
+
 function createPywebviewWindowHandle(windowName) {
   return {
     closed: false,

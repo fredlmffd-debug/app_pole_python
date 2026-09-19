@@ -58,14 +58,16 @@ def main() -> None:
     if remote_debug_port:
         webview.settings["REMOTE_DEBUGGING_PORT"] = int(remote_debug_port)
 
-    webview.create_window(
+    desktop_api = DesktopApi()
+    main_window = webview.create_window(
         "Pole Scoring",
         f"http://127.0.0.1:{APP_PORT}/",
-        width=1280,
+        width=1475,
         height=800,
         min_size=(1024, 700),
-        js_api=DesktopApi(),
+        js_api=desktop_api,
     )
+    desktop_api.main_window = main_window
     webview.start()
     _checkpoint_and_close_database()
 

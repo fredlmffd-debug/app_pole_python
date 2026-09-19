@@ -293,6 +293,8 @@ p {
 
 .workspace {
   position: relative;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
   min-height: 0;
   padding: 28px;
@@ -302,6 +304,7 @@ p {
 
 .workspace-header {
   display: flex;
+  flex-shrink: 0;
   justify-content: space-between;
   gap: 20px;
   align-items: flex-start;
@@ -350,6 +353,8 @@ p {
 
 .view.is-active {
   display: block;
+  flex: 1;
+  min-height: 0;
 }
 
 .dashboard-grid,
@@ -2810,8 +2815,31 @@ button:active:not(:disabled),
    CANDIDATS (GESTION + IMPORT)
    ========================= */
 
+#view-competitors.is-active {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.competitors-management-grid {
+  flex: 1;
+  min-height: 0;
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+
 .competitors-table-card {
   grid-column: 1 / -1;
+  align-self: stretch;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+#competitors-table {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .competitor-management-summary {
@@ -2878,7 +2906,9 @@ button:active:not(:disabled),
   display: grid;
   gap: 0;
   border-radius: 22px;
-  overflow: hidden;
+  flex: 1;
+  min-height: 110px;
+  overflow: auto;
   border: 1px solid rgba(84, 111, 150, 0.14);
   background: rgba(255, 255, 255, 0.62);
 }
@@ -2890,6 +2920,7 @@ button:active:not(:disabled),
   align-items: center;
   padding: 11px 18px;
   border-top: 1px solid rgba(84, 111, 150, 0.12);
+  min-width: 1000px;
 }
 
 .competitor-table-row:first-child {
@@ -6187,6 +6218,7 @@ pre {
 
   .competitor-table-row {
     grid-template-columns: 1fr;
+    min-width: 0;
   }
 
   .field-row {

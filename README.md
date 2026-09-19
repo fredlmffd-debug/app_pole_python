@@ -422,6 +422,93 @@ toujours au vert.
 Spécifique à la version Python : n'affecte pas Node, qui tourne en serveur
 persistant plutôt que d'être fermé/rouvert comme une appli desktop.
 
+### Correctif post-Phase 6 : dimension d'ouverture de la fenêtre + plein écran (F11)
+
+Demande de l'utilisateur : côté Node, la fenêtre est celle du navigateur
+(souvent déjà maximisée) ; côté Python, `webview.create_window()` ouvrait à
+une taille fixe (1280×800), trop petite sur certains écrans. Premier essai
+avec `maximized=True` : rejeté par l'utilisateur ("ça fait moins
+application"). Fixé sur une largeur d'ouverture de **1475px** (hauteur
+inchangée à 800px, fenêtre normale, redimensionnable) dans `__main__.py`.
+Ajouté en complément un vrai plein écran (F11) pour les petits écrans, via
+`DesktopApi.toggle_fullscreen()` (`desktop_api.py`) déclenché par un
+listener clavier dans `webui/app.js` (divergence Python uniquement, Node
+bénéficie déjà du plein écran natif du navigateur).
+
+Piège rencontré et corrigé sur le plein écran : `webview.active_window()`
+(utilisé dans une première version) s'appuie sur `WinForms.Form.ActiveForm`
+(`platforms/winforms.py`), qui s'est révélé peu fiable appelé depuis le
+thread des callbacks `js_api` (différent du thread UI) — il renvoyait
+`None`, faisant silencieusement échouer le toggle. Remplacé par une
+référence directe à la fenêtre principale, assignée à
+`DesktopApi.main_window` juste après `webview.create_window()` dans
+`__main__.py` (l'instance `DesktopApi` doit exister avant la création de
+la fenêtre, pour être passée en `js_api=...`, d'où l'assignation après
+coup plutôt qu'au constructeur). Vérifié sur la vraie fenêtre native (CDP +
+Playwright, écran 1920×1080) : F11 → 1920×1080 (plein écran réel, aucune
+bordure/barre de titre) ; second F11 → retour à l'état normal.
+
+En creusant le retour de l'utilisateur (capture d'écran à l'appui), la
+vraie cause de sa gêne n'était pas tant la largeur de fenêtre en soi que le
+tableau "Compétiteurs inscrits" (`public/app.js::renderCompetitorsTable`,
+classe `.competitor-table`) qui n'avait aucun mécanisme de repli — en
+dessous d'une certaine largeur, la colonne Actions (boutons
+Désistement/Forfait) sortait purement et simplement de l'écran, sans barre
+de défilement pour l'atteindre. Corrigé (Node d'abord, puis porté à
+l'identique) : `.competitor-table` passe en `overflow-x: auto`, et
+`.competitor-table-row` reçoit un `min-width: 1000px` qui déclenche le
+défilement horizontal dès que le conteneur est plus étroit que ça (guardé
+par un `min-width: 0` dans le media query `max-width: 900px` existant, qui
+bascule déjà la ligne en une seule colonne empilée sur mobile — sans ce
+garde-fou les deux stratégies responsive seraient entrées en conflit).
+Vérifié en direct (Playwright, viewport 1050px) : le bouton "Désistement"
+est hors-écran (x≈1116) avant défilement, atteignable (x≈738) après.
+
+Deuxième retour de l'utilisateur sur ce même correctif : avec beaucoup de
+compétiteurs, il fallait défiler la page tout en bas de la liste avant que
+la barre de défilement horizontale n'apparaisse — normal, un navigateur
+place la scrollbar horizontale au bas de sa boîte de défilement, et cette
+boîte (`.competitor-table`, alors non bornée en hauteur) grandissait avec
+le nombre de lignes. Premier essai : `.competitor-table` bornée à
+`max-height: 60vh`. Insuffisant sur la vraie fenêtre 1475×800 (zone client
+~1460×790) : les cartes "Choisir une compétition"/"Importer une liste"
+au-dessus du tableau ont une hauteur variable (celle du formulaire d'import,
+le plus grand des deux, la grille les étirant à l'identique), et pouvaient
+à elles seules dépasser `100vh - 480px` — un simple offset fixe en `calc()`
+s'est révélé structurellement peu fiable (dépend de la largeur de fenêtre,
+du texte qui se répartit sur plus ou moins de lignes, du contenu du
+formulaire).
+
+Corrigé en faisant remplir au tableau tout l'espace vertical réellement
+disponible, plutôt que de le deviner : `.workspace` passe en
+`display: flex; flex-direction: column`, `.view.is-active` devient
+`flex: 1; min-height: 0`, et toute la chaîne jusqu'à `.competitor-table`
+(`#view-competitors.is-active`, `.competitors-management-grid` avec
+`grid-template-rows: auto auto minmax(0, 1fr)`, `.competitors-table-card`,
+`#competitors-table`) relaie ce `flex: 1; min-height: 0`, avec un plancher
+`min-height: 110px` sur `.competitor-table` lui-même pour toujours garantir
+au moins une ligne visible. Piège rencontré en chemin : une règle
+`.competitors-management-grid { align-items: start; }` préexistante
+empêchait le `stretch` par défaut de CSS Grid de s'appliquer à
+`.competitors-table-card` — corrigé avec un `align-self: stretch` ciblé
+sur cette seule carte, sans toucher aux 3 autres cartes de la grille.
+
+Changement partagé (`.workspace`/`.view.is-active`) revérifié visuellement
+sur toutes les autres vues (Vue d'ensemble, Compétitions, Juges,
+Conducteur, Statistiques) : aucune régression, comportement identique à
+avant. Vérifié en direct (Playwright, 25 compétiteurs, fenêtre 1460×790
+réelle) : le bas du tableau tient exactement dans le viewport, **aucun
+défilement de page nécessaire** (contre ~1300px de trop avec l'approche
+`60vh`). Sur une fenêtre nettement réduite (1050×700), l'amélioration
+reste nette même si un léger défilement de page redevient nécessaire dans
+ce cas extrême (fenêtre bien plus petite que l'ouverture par défaut) :
+l'essentiel est que la scrollbar horizontale n'est plus jamais enterrée
+sous des dizaines de lignes.
+
+Suite de 129 tests toujours au vert (aucun de ces changements n'est
+couvert par un test unitaire : comportement de fenêtre native ou de mise
+en page CSS, pas une fonction de service).
+
 ### Détail Phase 5
 
 Portés : export PDF (pilotage d'Edge/Chrome headless installé sur le poste,
