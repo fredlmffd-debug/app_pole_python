@@ -391,6 +391,37 @@ création d'un compte comme dans le formulaire) sont passées de `'admin'` à
 privilégié ; le garder tel quel après renommage aurait accordé les pleins
 droits par défaut à tout compte créé sans rôle explicite.
 
+### Correctif post-Phase 6 : checkpoint WAL manquant à la fermeture de l'appli
+
+Remonté par l'utilisateur en comparant les dates de modification des
+fichiers `.sqlite`/`.sqlite-wal`/`.sqlite-shm` dans l'explorateur Windows :
+le fichier `.sqlite` restait figé à la date du dernier checkpoint SQLite
+automatique (seuil interne ~1000 pages de WAL), alors que `.sqlite-wal`
+continuait de grossir avec les écritures de sessions ultérieures — y
+compris après avoir fermé l'application. Aucune perte de données (SQLite
+relit le WAL a l'ouverture suivante), mais un fichier `.sqlite` trompeur
+pour qui l'ouvre seul dans un outil externe (ex. SQLiteStudio) sans les
+fichiers `-wal`/`-shm` a côté.
+
+Cause : ni `webview.events.closed`, ni la fin de `main()` ne déclenchaient
+de `PRAGMA wal_checkpoint` ni de fermeture propre de la connexion SQLite —
+le process se terminait simplement, laissant les écritures récentes dans
+le WAL. Corrigé dans `__main__.py` : `_checkpoint_and_close_database()`
+est appelée juste après le retour de `webview.start()` (qui bloque tant
+qu'une fenêtre reste ouverte, donc s'exécute exactement à la fermeture de
+l'appli), et fait le checkpoint puis ferme la connexion.
+
+Vérifié par un test direct (hors suite pytest, car il s'agit d'un
+comportement de processus complet plutôt que d'une fonction de service) :
+20 écritures créent bien un `.sqlite-wal` de plusieurs centaines de Ko sans
+que `.sqlite` ne bouge, puis l'appel du correctif fait disparaître
+totalement `.sqlite-wal`/`.sqlite-shm` et met à jour `.sqlite`, dont le
+contenu (les 20 lignes) est confirmé après réouverture. Suite de 129 tests
+toujours au vert.
+
+Spécifique à la version Python : n'affecte pas Node, qui tourne en serveur
+persistant plutôt que d'être fermé/rouvert comme une appli desktop.
+
 ### Détail Phase 5
 
 Portés : export PDF (pilotage d'Edge/Chrome headless installé sur le poste,

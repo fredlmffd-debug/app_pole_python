@@ -10,6 +10,7 @@ import webview
 
 from .app import create_app
 from .config import APP_HOST, APP_PORT, DATA_DIR
+from .db.connection import get_db
 from .desktop_api import DesktopApi
 
 
@@ -27,6 +28,21 @@ def _wait_for_server(host: str, port: int, timeout: float = 10.0) -> None:
             if sock.connect_ex((probe_host, port)) == 0:
                 return
         time.sleep(0.1)
+
+
+def _checkpoint_and_close_database() -> None:
+    # webview.start() bloque tant qu'une fenetre est ouverte ; une fois qu'il
+    # revient, l'utilisateur a ferme l'appli. Sans ce checkpoint, le fichier
+    # .sqlite reste fige a l'etat du dernier checkpoint automatique SQLite
+    # (seuil ~1000 pages de WAL) et les ecritures recentes ne restent
+    # visibles que via -wal/-shm, ce qui rend le .sqlite trompeur pour qui
+    # l'ouvre seul dans un outil externe (ex. SQLiteStudio).
+    try:
+        db = get_db()
+        db.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        db.close()
+    except Exception:
+        pass
 
 
 def main() -> None:
@@ -51,6 +67,7 @@ def main() -> None:
         js_api=DesktopApi(),
     )
     webview.start()
+    _checkpoint_and_close_database()
 
 
 if __name__ == "__main__":
