@@ -48,7 +48,17 @@ class DesktopApi:
         # toggle_fullscreen() : webview.active_window() s'appuie sur
         # WinForms.Form.ActiveForm, peu fiable depuis le thread des callbacks
         # js_api (pas le thread UI) — mieux vaut une reference directe.
-        self.main_window: "Window | None" = None
+        #
+        # Prefixe _ obligatoire : inject_pywebview() (webview/util.py) parcourt
+        # recursivement tout attribut PUBLIC non appelable de js_api pour y
+        # decouvrir des methodes a exposer en JS, en sautant explicitement
+        # ceux prefixes par _. Sans ce prefixe, un objet Window (qui expose
+        # .native, un graphe .NET partiellement circulaire via pythonnet) se
+        # fait parcourir integralement au demarrage : RecursionError et acces
+        # a des proprietes WebView2 hors du thread UI (erreurs "[pywebview]
+        # Error while processing main_window.native...." observees en ligne
+        # de commande).
+        self._main_window: "Window | None" = None
 
     def open_window(self, url: str, name: str = "", width: object = None, height: object = None) -> bool:
         window_key = str(name or url).strip() or str(url)
@@ -97,11 +107,11 @@ class DesktopApi:
         return True
 
     def toggle_fullscreen(self) -> bool:
-        if self.main_window is None:
+        if self._main_window is None:
             return False
 
         try:
-            self.main_window.toggle_fullscreen()
+            self._main_window.toggle_fullscreen()
         except Exception:
             return False
 

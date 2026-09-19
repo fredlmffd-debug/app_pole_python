@@ -67,7 +67,7 @@ def main() -> None:
         min_size=(1024, 700),
         js_api=desktop_api,
     )
-    desktop_api.main_window = main_window
+    desktop_api._main_window = main_window
     webview.start()
     _checkpoint_and_close_database()
 

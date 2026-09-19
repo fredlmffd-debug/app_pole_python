@@ -509,6 +509,41 @@ Suite de 129 tests toujours au vert (aucun de ces changements n'est
 couvert par un test unitaire : comportement de fenêtre native ou de mise
 en page CSS, pas une fonction de service).
 
+### Correctif post-Phase 6 : RecursionError au lancement en ligne de commande
+
+Remonté par l'utilisateur : `.venv\Scripts\python -m pole_scoring` déversait
+en console des dizaines de lignes `[pywebview] Error while processing
+main_window.native.AccessibilityObject.Bounds.Empty.Empty.Empty...:
+maximum recursion depth exceeded`, suivies d'erreurs `CoreWebView2Controller
+members can only be accessed from the UI thread`. L'appli restait
+utilisable (serveur et fenêtre fonctionnels), mais le bruit console était
+un vrai symptôme d'un bug introduit par le correctif précédent (F11).
+
+Cause : `webview/util.py::inject_pywebview()` — le mécanisme qui construit
+le pont `window.pywebview.api` — parcourt **récursivement tout attribut
+public non appelable** de l'instance `js_api` (`DesktopApi`) via `dir()`
+pour y découvrir d'éventuelles méthodes imbriquées à exposer, en sautant
+explicitement ceux préfixés par `_`. `DesktopApi._main_window` (alors
+public, `self.main_window`) est un objet `Window` pywebview, qui expose
+`.native` — un graphe d'objets .NET partiellement circulaire (via
+pythonnet) — que ce parcours essayait donc d'énumérer intégralement au
+démarrage, provoquant la récursion infinie et, en chemin, des accès à des
+propriétés `CoreWebView2Controller` depuis le mauvais thread.
+
+Corrigé en renommant `DesktopApi.main_window` en `DesktopApi._main_window`
+(`desktop_api.py`, `__main__.py`) : le préfixe `_` suffit à faire sauter
+cet attribut par `inject_pywebview()`. Point de vigilance pour la suite :
+tout futur attribut ajouté à `DesktopApi` doit être préfixé `_` sous peine
+de reproduire ce bug si l'objet référencé a des propriétés qui échouent ou
+bouclent à l'introspection (fenêtres pywebview, objets pythonnet/.NET en
+tête de liste).
+
+Vérifié en relançant `python -m pole_scoring` exactement comme
+l'utilisateur (aucune ligne d'erreur, contre des dizaines de milliers de
+caractères avant) et en revérifiant F11 en direct (CDP + Playwright) :
+toujours fonctionnel dans les deux sens. Suite de 129 tests toujours au
+vert.
+
 ### Détail Phase 5
 
 Portés : export PDF (pilotage d'Edge/Chrome headless installé sur le poste,
