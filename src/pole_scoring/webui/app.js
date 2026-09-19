@@ -87,7 +87,7 @@ const competitionLevelOptions = [
   { value: 'national', label: 'National' }
 ];
 
-const competitionJudgeCountOptions = Array.from({ length: 9 }, (_, index) => {
+const competitionJudgeCountOptions = Array.from({ length: 20 }, (_, index) => {
   const judgeCount = index + 1;
   return {
     value: String(judgeCount),
@@ -991,7 +991,7 @@ function normalizeCompetitionJudgeCountValue(value) {
     return 3;
   }
 
-  return Math.min(Math.max(parsedValue, 1), 9);
+  return Math.min(Math.max(parsedValue, 1), 20);
 }
 
 function formatCompetitionJudgeCountLabel(value) {
@@ -2799,6 +2799,10 @@ function renderCompetitionEditJudges() {
           ${assignmentRows}
         </div>
       `}
+
+    <div class="competition-judge-assignment-actions">
+      <button type="button" id="competition-edit-add-judge-slot" class="ghost-button" ${plannedJudgeCount >= 20 ? 'disabled' : ''}>+ Ajouter un juge</button>
+    </div>
   `;
 }
 
@@ -2856,6 +2860,38 @@ async function hydrateCompetitionEditAssignments(competitionId) {
     if (root) {
       root.innerHTML = `<p class="empty-state">${escapeHtml(error.message || 'Erreur de chargement des affectations')}</p>`;
     }
+  }
+}
+
+async function addCompetitionEditJudgeSlot() {
+  const competitionId = competitionEditState.competitionId;
+  const competition = competitionsState.find((item) => item.id === competitionId);
+
+  if (!competitionId || !competition) {
+    return;
+  }
+
+  const currentJudgeCount = normalizeCompetitionJudgeCountValue(competition.judgeCount);
+
+  if (currentJudgeCount >= 20) {
+    showToast('Nombre maximum de juges atteint (20).', 'error');
+    return;
+  }
+
+  const formElement = document.querySelector('#competition-edit-form');
+  const payload = Object.fromEntries(new FormData(formElement).entries());
+  payload.judgeCount = String(currentJudgeCount + 1);
+
+  try {
+    await request(`/api/competitions/${competitionId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    });
+    await refresh();
+    fillCompetitionEditForm(competitionId);
+    showToast('Ligne de juge ajoutée.', 'success');
+  } catch (error) {
+    showToast(error.message, 'error');
   }
 }
 
@@ -5796,6 +5832,14 @@ document.querySelector('#competition-edit-judges').addEventListener('change', as
     showToast(error.message, 'error');
     renderCompetitionEditJudges();
   }
+});
+
+document.querySelector('#competition-edit-judges').addEventListener('click', async (event) => {
+  if (!event.target.closest('#competition-edit-add-judge-slot')) {
+    return;
+  }
+
+  await addCompetitionEditJudgeSlot();
 });
 
 document.querySelector('#competition-competitor-import-file').addEventListener('change', async (event) => {

@@ -2419,6 +2419,12 @@ button:active:not(:disabled),
   height: 18px;
 }
 
+.competition-judge-assignment-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 4px;
+}
+
 @media (max-width: 1200px) {
   .competition-wizard-steps {
     grid-template-columns: 1fr;

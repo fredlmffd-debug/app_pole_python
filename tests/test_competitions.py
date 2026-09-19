@@ -80,7 +80,7 @@ def test_regional_competition_requires_region(bootstrapped_db: Database) -> None
 
 def test_normalize_judge_count_clamps() -> None:
     assert competitions_service.normalize_judge_count(0) == 1
-    assert competitions_service.normalize_judge_count(20) == 9
+    assert competitions_service.normalize_judge_count(30) == 20
     assert competitions_service.normalize_judge_count("abc") == 3
     assert competitions_service.normalize_judge_count(5) == 5
 

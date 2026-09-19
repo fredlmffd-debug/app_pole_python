@@ -106,13 +106,13 @@ def normalize_competition_territory(level: str, region: str | None, zone: str | 
 
 
 def normalize_judge_count(value: object, fallback_value: int = 3) -> int:
-    normalized_fallback = min(max(int(fallback_value), 1), 9) if isinstance(fallback_value, int) else 3
+    normalized_fallback = min(max(int(fallback_value), 1), 20) if isinstance(fallback_value, int) else 3
     parsed_value = parse_int_like_js(value)
 
     if parsed_value is None:
         return normalized_fallback
 
-    return min(max(parsed_value, 1), 9)
+    return min(max(parsed_value, 1), 20)
 
 
 def normalize_competition_payload(payload: dict) -> dict:
