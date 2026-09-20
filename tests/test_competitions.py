@@ -4,6 +4,8 @@ import pytest
 
 from pole_scoring.db.connection import Database
 from pole_scoring.services import competitions as competitions_service
+from pole_scoring.services import judge_assignments as judge_assignments_service
+from pole_scoring.services import judges as judges_service
 
 
 def test_create_and_list_competition(bootstrapped_db: Database) -> None:
@@ -91,3 +93,39 @@ def test_list_competitions_on_real_reference_data(reference_db: Database) -> Non
     for competition in listed:
         assert "hasGeneralInfo" in competition
         assert "hasResults" in competition
+        assert "hasShadowJudges" in competition
+
+
+def test_has_shadow_judges_reflects_trainee_assignments(bootstrapped_db: Database) -> None:
+    competition = competitions_service.create_competition(
+        bootstrapped_db, name="Comp Shadow Flag", event_date="2026-09-05", judge_count=1
+    )
+    judge = judges_service.add_judge(
+        bootstrapped_db, first_name="Alice", last_name="Martin", login="alice-shadow", password="secret"
+    )
+
+    def has_shadow_judges() -> bool:
+        listed = competitions_service.list_competitions(bootstrapped_db)
+        return bool(next(item for item in listed if item["id"] == competition["id"])["hasShadowJudges"])
+
+    assert has_shadow_judges() is False
+
+    judge_assignments_service.set_competition_judge_assignment(
+        bootstrapped_db,
+        competition_id=competition["id"],
+        slot_index=1,
+        judge_role="artistique",
+        judge_id=judge["id"],
+        is_trainee=True,
+    )
+    assert has_shadow_judges() is True
+
+    judge_assignments_service.set_competition_judge_assignment(
+        bootstrapped_db,
+        competition_id=competition["id"],
+        slot_index=1,
+        judge_role="artistique",
+        judge_id=judge["id"],
+        is_trainee=False,
+    )
+    assert has_shadow_judges() is False

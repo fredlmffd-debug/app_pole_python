@@ -95,6 +95,9 @@ def build_pdf_file_name_base(category: dict, payload: dict, competition_name_par
         print_mode = str(payload.get("printMode") or payload.get("mode") or "").strip().lower()
         parts.append("candidat" if print_mode == "current" else "tous")
 
+    if category["type"] == "scoring_sheets" and payload.get("onlyShadows") is True:
+        parts.append("shadows")
+
     return "-".join(parts)
 
 
@@ -306,6 +309,8 @@ def build_pdf_target_url(db: Database, payload: dict) -> dict:
     params = {"competitionId": competition_id, "exportPdf": "1"}
 
     if category["type"] == "scoring_sheets":
+        if payload.get("onlyShadows") is True:
+            params["onlyShadows"] = "1"
         return {"relativeUrl": f"/scoring-sheets.html?{urlencode(params)}", "competitionId": competition_id, "category": category}
 
     if category["type"] == "competition_results":
@@ -417,7 +422,11 @@ def export_pdf(db: Database, payload: dict) -> dict:
     if stats.st_size <= 0:
         raise ValueError("Le fichier PDF généré est vide")
 
-    opened = open_path_in_explorer(str(output_path))
+    # On n'ouvre plus le fichier PDF lui-meme ici (Start-Process sur un .pdf
+    # lance le lecteur PDF par defaut, qui vole le focus a la fenetre
+    # Explorer ouverte juste apres par le client via /api/pdf/open-folder).
+    # L'ouverture du dossier d'export reste la seule action declenchee,
+    # demandee explicitement par le client apres un export reussi.
     register_pdf_export(
         type_=target["category"]["type"],
         competition_id=competition_context["competitionId"],
@@ -427,7 +436,7 @@ def export_pdf(db: Database, payload: dict) -> dict:
 
     return {
         "ok": True,
-        "opened": opened,
+        "opened": False,
         "type": target["category"]["type"],
         "fileName": file_name,
         "filePath": str(output_path),

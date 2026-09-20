@@ -287,6 +287,13 @@ def list_competitions(db: Database) -> list[dict]:
                ) AS canGenerateJudgeSheets,
                EXISTS(
                  SELECT 1
+                 FROM judge_competition_assignments a
+                 WHERE a.competition_id = competitions.id
+                   AND COALESCE(a.is_trainee, 0) = 1
+                   AND COALESCE(TRIM(a.judge_id), '') <> ''
+               ) AS hasShadowJudges,
+               EXISTS(
+                 SELECT 1
                  FROM scores s
                  WHERE s.competition_id = competitions.id
                ) AS hasResults,

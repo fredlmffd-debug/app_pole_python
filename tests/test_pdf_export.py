@@ -32,6 +32,10 @@ def test_build_pdf_file_name_base_variants() -> None:
         pdf_export.build_pdf_file_name_base(scoring_category, {}, "comp", "16-09-2026")
         == "scoring-sheets-comp-16-09-2026"
     )
+    assert (
+        pdf_export.build_pdf_file_name_base(scoring_category, {"onlyShadows": True}, "comp", "16-09-2026")
+        == "scoring-sheets-comp-16-09-2026-shadows"
+    )
 
     results_category = {"filePrefix": "competition-results", "type": "competition_results"}
     assert (
@@ -73,6 +77,12 @@ def test_build_pdf_target_url_variants(bootstrapped_db: Database) -> None:
         bootstrapped_db, {"type": "scoring_sheets", "competitionId": competition["id"]}
     )
     assert scoring_target["relativeUrl"].startswith("/scoring-sheets.html?")
+    assert "onlyShadows" not in scoring_target["relativeUrl"]
+
+    shadow_target = pdf_export.build_pdf_target_url(
+        bootstrapped_db, {"type": "scoring_sheets", "competitionId": competition["id"], "onlyShadows": True}
+    )
+    assert "onlyShadows=1" in shadow_target["relativeUrl"]
 
     results_target = pdf_export.build_pdf_target_url(
         bootstrapped_db, {"type": "competition_results", "competitionId": competition["id"], "view": "podium"}

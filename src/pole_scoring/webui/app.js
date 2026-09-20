@@ -462,7 +462,7 @@ function openIndividualStatisticsWindow({ competitionId }) {
   });
 }
 
-function openScoringSheetsWindow({ competitionId }) {
+function openScoringSheetsWindow({ competitionId, onlyShadows = false }) {
   const normalizedCompetitionId = String(competitionId ?? '').trim();
   const popupWidth = 1220;
   const popupHeight = 920;
@@ -475,9 +475,13 @@ function openScoringSheetsWindow({ competitionId }) {
     competitionId: normalizedCompetitionId
   });
 
+  if (onlyShadows) {
+    params.set('onlyShadows', '1');
+  }
+
   return openDedicatedWindow({
     url: `/scoring-sheets.html?${params.toString()}`,
-    windowName: `scoring-sheets-${normalizedCompetitionId}`,
+    windowName: `scoring-sheets${onlyShadows ? '-shadows' : ''}-${normalizedCompetitionId}`,
     popupWidth,
     popupHeight
   });
@@ -3349,7 +3353,19 @@ function renderCompetitions(competitions) {
                     data-competition-id="${escapeHtml(competition.id)}"
                     ${competition.canGenerateJudgeSheets ? '' : 'disabled'}
                     title="${competition.canGenerateJudgeSheets ? 'Générer les feuilles juges en PDF' : 'Complétez les informations pour activer la génération PDF'}"
-                  >Scoring-sheets</button>`
+                  >Scoring-sheets</button>
+                  <button
+                    type="button"
+                    class="competition-directory-action-button ${competition.canGenerateJudgeSheets && competition.hasShadowJudges ? 'is-ready-shadow' : 'is-disabled'}"
+                    data-competition-action="generate-judge-shadow-sheets"
+                    data-competition-id="${escapeHtml(competition.id)}"
+                    ${competition.canGenerateJudgeSheets && competition.hasShadowJudges ? '' : 'disabled'}
+                    title="${!competition.canGenerateJudgeSheets
+                      ? 'Complétez les informations pour activer la génération PDF'
+                      : competition.hasShadowJudges
+                        ? 'Générer uniquement les feuilles des juges shadow en PDF'
+                        : 'Aucun juge shadow enregistré pour cette compétition'}"
+                  >Scoring-shadows</button>`
                 : ''}
             </span>
           </div>
@@ -3374,6 +3390,26 @@ function renderCompetitions(competitions) {
       }
 
       showToast('Fenetre Scoring-sheets ouverte.', 'success');
+    });
+  });
+
+  root.querySelectorAll('[data-competition-action="generate-judge-shadow-sheets"]').forEach((button) => {
+    button.addEventListener('click', () => {
+      if (button.disabled) {
+        return;
+      }
+
+      const popup = openScoringSheetsWindow({
+        competitionId: button.dataset.competitionId,
+        onlyShadows: true
+      });
+
+      if (!popup) {
+        showToast('Le navigateur a bloque l\'ouverture de la fenetre Scoring-shadows.', 'error');
+        return;
+      }
+
+      showToast('Fenetre Scoring-shadows ouverte.', 'success');
     });
   });
 }

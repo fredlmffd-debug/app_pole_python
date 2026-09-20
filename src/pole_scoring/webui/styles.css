@@ -2281,7 +2281,9 @@ button:active:not(:disabled),
 
 .competition-directory-card {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
+  min-width: 0;
 }
 
 .competition-judges-screen,
@@ -2500,13 +2502,16 @@ button:active:not(:disabled),
   display: grid;
   gap: 0;
   border-radius: 22px;
-  overflow: hidden;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
   border: 1px solid rgba(84, 111, 150, 0.14);
   background: rgba(255, 255, 255, 0.62);
 }
 
 .competition-directory-entry {
   border-top: 1px solid rgba(84, 111, 150, 0.12);
+  min-width: 0;
 }
 
 .competition-directory-entry:first-of-type {
@@ -2515,7 +2520,7 @@ button:active:not(:disabled),
 
 .competitions-table-row {
   display: grid;
-  grid-template-columns: minmax(116px, 0.65fr) minmax(320px, 1.9fr) minmax(140px, 0.8fr) minmax(190px, 1fr);
+  grid-template-columns: minmax(116px, 0.65fr) minmax(320px, 1.9fr) minmax(140px, 0.8fr) minmax(272px, 1fr);
   gap: 18px;
   align-items: center;
   padding: 16px 18px;
@@ -2547,6 +2552,8 @@ button:active:not(:disabled),
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  flex-wrap: nowrap;
+  gap: 8px;
 }
 
 .competition-directory-action-button {
@@ -2556,7 +2563,8 @@ button:active:not(:disabled),
   border-radius: 10px;
   border: 1px solid transparent;
   min-height: 32px;
-  padding: 0 12px;
+  padding: 0 10px;
+  font-size: 0.86rem;
   white-space: nowrap;
   font-weight: 600;
   transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
@@ -2579,6 +2587,18 @@ button:active:not(:disabled),
 .competition-directory-action-button.is-ready:hover {
   background: rgba(125, 193, 236, 0.42);
   border-color: rgba(66, 141, 205, 0.56);
+}
+
+.competition-directory-action-button.is-ready-shadow {
+  color: #4d4570;
+  background: rgba(154, 138, 219, 0.28);
+  border-color: rgba(124, 104, 201, 0.46);
+  cursor: pointer;
+}
+
+.competition-directory-action-button.is-ready-shadow:hover {
+  background: rgba(140, 121, 212, 0.38);
+  border-color: rgba(106, 84, 189, 0.56);
 }
 
 .competition-security-badge {

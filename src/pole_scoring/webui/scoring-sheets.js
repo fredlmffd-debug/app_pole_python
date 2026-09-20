@@ -12,26 +12,6 @@ function buildApiUrl(path, forceLocal = false) {
   return `http://127.0.0.1:${port}${path}`;
 }
 
-function openExportsBrowserView(type) {
-  const safeType = encodeURIComponent(String(type ?? '').trim());
-  if (!safeType) {
-    return;
-  }
-
-  const base = buildApiUrl('', true).replace(/\/$/, '');
-  const targetUrl = `${base}/api/pdf/browse?type=${safeType}`;
-  const popupName = `pole-exports-${safeType}`;
-  const popupFeatures = 'popup=yes,width=1200,height=820,left=120,top=80,resizable=yes,scrollbars=yes';
-  const popup = window.open(targetUrl, popupName, popupFeatures);
-
-  if (popup) {
-    popup.focus();
-    return;
-  }
-
-  window.location.assign(targetUrl);
-}
-
 async function request(path, options = {}, { forceLocal = false } = {}) {
   const accessToken = window.sessionStorage.getItem('access-session-token')
     ?? window.localStorage.getItem('access-session-token')
@@ -360,23 +340,26 @@ function sortJudges(assignments) {
 async function bootstrapScoringSheets() {
   const search = new URLSearchParams(window.location.search);
   const competitionId = String(search.get('competitionId') ?? '').trim();
+  const onlyShadows = search.get('onlyShadows') === '1';
   const subtitle = document.querySelector('#scoring-sheets-subtitle');
   const toolbar = document.querySelector('#scoring-sheets-toolbar');
   const errorRoot = document.querySelector('#scoring-sheets-error');
   const pagesRoot = document.querySelector('#scoring-sheets-pages');
   const printButton = document.querySelector('#scoring-sheets-print');
-  const openFolderButton = document.querySelector('#scoring-sheets-open-export-folder');
-  const closeButton = document.querySelector('#scoring-sheets-close');
+  const titleHeading = document.querySelector('#scoring-sheets-toolbar h1');
+
+  if (onlyShadows) {
+    document.title = 'Pole Scoring - Scoring-shadows';
+    if (titleHeading) {
+      titleHeading.textContent = 'Scoring-shadows';
+    }
+  }
 
   const setError = (message) => {
     errorRoot.hidden = false;
     errorRoot.textContent = message;
     pagesRoot.hidden = true;
   };
-
-  closeButton?.addEventListener('click', () => {
-    window.close();
-  });
 
   printButton?.addEventListener('click', async () => {
     if (!competitionId) {
@@ -393,12 +376,22 @@ async function bootstrapScoringSheets() {
         method: 'POST',
         body: JSON.stringify({
           type: 'scoring_sheets',
-          competitionId
+          competitionId,
+          onlyShadows
         })
       }, { forceLocal: true });
 
       if (subtitle) {
-        subtitle.textContent = 'PDF généré. Ouverture du lecteur demandée...';
+        subtitle.textContent = `PDF généré (${payload?.fileName ?? ''}). Ouverture du dossier des exports...`;
+      }
+
+      try {
+        await request('/api/pdf/open-folder', {
+          method: 'POST',
+          body: JSON.stringify({ type: 'scoring_sheets' })
+        }, { forceLocal: true });
+      } catch {
+        // Le PDF a bien été généré ; l'ouverture Explorer reste facultative.
       }
     } catch (error) {
       setError(error.message || 'Impossible de générer le PDF des scoring-sheets.');
@@ -409,21 +402,10 @@ async function bootstrapScoringSheets() {
     }
   });
 
-  openFolderButton?.addEventListener('click', async () => {
-    openExportsBrowserView('scoring_sheets');
-
-    try {
-      await request('/api/pdf/open-folder', {
-        method: 'POST',
-        body: JSON.stringify({ type: 'scoring_sheets' })
-      }, { forceLocal: true });
-    } catch {
-      // La vue web est déjà ouverte; l'ouverture Explorer reste facultative.
-    }
-  });
-
   if (!competitionId) {
-    setError('Paramètre compétition manquant pour générer les Scoring-sheets.');
+    setError(onlyShadows
+      ? 'Paramètre compétition manquant pour générer les Scoring-shadows.'
+      : 'Paramètre compétition manquant pour générer les Scoring-sheets.');
     return;
   }
 
@@ -447,10 +429,13 @@ async function bootstrapScoringSheets() {
       throw new Error('Aucun compétiteur actif à imprimer pour cette compétition.');
     }
 
-    const judges = sortJudges(assignments);
+    const allJudges = sortJudges(assignments);
+    const judges = onlyShadows ? allJudges.filter((judge) => Boolean(judge?.isTrainee)) : allJudges;
 
     if (!judges.length) {
-      throw new Error('Aucun juge affecté à cette compétition.');
+      throw new Error(onlyShadows
+        ? 'Aucun juge shadow affecté à cette compétition.'
+        : 'Aucun juge affecté à cette compétition.');
     }
 
     const profile = scoringProfilePayload?.profile ?? null;
@@ -485,7 +470,8 @@ async function bootstrapScoringSheets() {
       });
     }).join('');
 
-    subtitle.textContent = `${competition.name} · ${judges.length} juge(s) · ${pages.length} page(s)`;
+    const judgeCountLabel = onlyShadows ? `${judges.length} juge(s) shadow` : `${judges.length} juge(s)`;
+    subtitle.textContent = `${competition.name} · ${judgeCountLabel} · ${pages.length} page(s)`;
     pagesRoot.hidden = false;
     errorRoot.hidden = true;
 
