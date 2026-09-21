@@ -12,26 +12,6 @@ function buildApiUrl(path, forceLocal = false) {
   return `http://127.0.0.1:${port}${path}`;
 }
 
-function openExportsBrowserView(type) {
-  const safeType = encodeURIComponent(String(type ?? '').trim());
-  if (!safeType) {
-    return;
-  }
-
-  const base = buildApiUrl('', true).replace(/\/$/, '');
-  const targetUrl = `${base}/api/pdf/browse?type=${safeType}`;
-  const popupName = `pole-exports-${safeType}`;
-  const popupFeatures = 'popup=yes,width=1200,height=820,left=120,top=80,resizable=yes,scrollbars=yes';
-  const popup = window.open(targetUrl, popupName, popupFeatures);
-
-  if (popup) {
-    popup.focus();
-    return;
-  }
-
-  window.location.assign(targetUrl);
-}
-
 async function request(path, options = {}, { forceLocal = false } = {}) {
   const requestUrl = buildApiUrl(path, forceLocal);
 
@@ -445,8 +425,6 @@ async function bootstrapCompetitionResults() {
   const errorRoot = document.querySelector('#competition-results-error');
   const contentRoot = document.querySelector('#competition-results-content');
   const printButton = document.querySelector('#competition-results-print');
-  const openFolderButton = document.querySelector('#competition-results-open-export-folder');
-  const closeButton = document.querySelector('#competition-results-close');
 
   const setError = (message) => {
     if (errorRoot) {
@@ -480,7 +458,16 @@ async function bootstrapCompetitionResults() {
       }, { forceLocal: true });
 
       if (subtitleNode) {
-        subtitleNode.textContent = 'PDF généré. Ouverture du lecteur demandée...';
+        subtitleNode.textContent = `PDF généré (${payload?.fileName ?? ''}). Ouverture du dossier des exports...`;
+      }
+
+      try {
+        await request('/api/pdf/open-folder', {
+          method: 'POST',
+          body: JSON.stringify({ type: 'competition_results' })
+        }, { forceLocal: true });
+      } catch {
+        // Le PDF a bien été généré ; l'ouverture Explorer reste facultative.
       }
     } catch (error) {
       setError(error.message || 'Impossible de générer le PDF des classements.');
@@ -489,23 +476,6 @@ async function bootstrapCompetitionResults() {
         printButton.disabled = false;
       }
     }
-  });
-
-  openFolderButton?.addEventListener('click', async () => {
-    openExportsBrowserView('competition_results');
-
-    try {
-      await request('/api/pdf/open-folder', {
-        method: 'POST',
-        body: JSON.stringify({ type: 'competition_results' })
-      }, { forceLocal: true });
-    } catch {
-      // La vue web est déjà ouverte; l'ouverture Explorer reste facultative.
-    }
-  });
-
-  closeButton?.addEventListener('click', () => {
-    window.close();
   });
 
   if (!competitionId) {

@@ -12,26 +12,6 @@ function buildApiUrl(path, forceLocal = false) {
   return `http://127.0.0.1:${port}${path}`;
 }
 
-function openExportsBrowserView(type) {
-  const safeType = encodeURIComponent(String(type ?? '').trim());
-  if (!safeType) {
-    return;
-  }
-
-  const base = buildApiUrl('', true).replace(/\/$/, '');
-  const targetUrl = `${base}/api/pdf/browse?type=${safeType}`;
-  const popupName = `pole-exports-${safeType}`;
-  const popupFeatures = 'popup=yes,width=1200,height=820,left=120,top=80,resizable=yes,scrollbars=yes';
-  const popup = window.open(targetUrl, popupName, popupFeatures);
-
-  if (popup) {
-    popup.focus();
-    return;
-  }
-
-  window.location.assign(targetUrl);
-}
-
 async function request(path, options = {}, { forceLocal = false } = {}) {
   const accessToken = window.sessionStorage.getItem('access-session-token')
     ?? window.localStorage.getItem('access-session-token')
@@ -724,9 +704,7 @@ async function bootstrapIndividualStatistics() {
   const selectNode = document.querySelector('#individual-stats-competitor-select');
   const printCurrentButton = document.querySelector('#individual-stats-print-current');
   const printAllButton = document.querySelector('#individual-stats-print-all');
-  const openFolderButton = document.querySelector('#individual-stats-open-export-folder');
   const hideShadowCommentsNode = document.querySelector('#individual-stats-hide-shadow-comments');
-  const closeButton = document.querySelector('#individual-stats-close');
   const errorRoot = document.querySelector('#individual-stats-error');
   const contentRoot = document.querySelector('#individual-stats-content');
 
@@ -742,10 +720,6 @@ async function bootstrapIndividualStatistics() {
       contentRoot.hidden = true;
     }
   };
-
-  closeButton?.addEventListener('click', () => {
-    window.close();
-  });
 
   const initialHideShadowComments = forceHideShadowComments === 'true'
     ? true
@@ -873,7 +847,16 @@ async function bootstrapIndividualStatistics() {
         }, { forceLocal: true });
 
         if (subtitleNode) {
-          subtitleNode.textContent = 'PDF généré. Ouverture du lecteur demandée...';
+          subtitleNode.textContent = `PDF généré (${payload?.fileName ?? ''}). Ouverture du dossier des exports...`;
+        }
+
+        try {
+          await request('/api/pdf/open-folder', {
+            method: 'POST',
+            body: JSON.stringify({ type: 'individual_statistics' })
+          }, { forceLocal: true });
+        } catch {
+          // Le PDF a bien été généré ; l'ouverture Explorer reste facultative.
         }
       } catch (error) {
         setError(error.message || 'Impossible de générer le PDF individuel.');
@@ -901,7 +884,16 @@ async function bootstrapIndividualStatistics() {
         }, { forceLocal: true });
 
         if (subtitleNode) {
-          subtitleNode.textContent = 'PDF généré. Ouverture du lecteur demandée...';
+          subtitleNode.textContent = `PDF généré (${payload?.fileName ?? ''}). Ouverture du dossier des exports...`;
+        }
+
+        try {
+          await request('/api/pdf/open-folder', {
+            method: 'POST',
+            body: JSON.stringify({ type: 'individual_statistics' })
+          }, { forceLocal: true });
+        } catch {
+          // Le PDF a bien été généré ; l'ouverture Explorer reste facultative.
         }
       } catch (error) {
         setError(error.message || 'Impossible de générer le PDF global.');
@@ -909,19 +901,6 @@ async function bootstrapIndividualStatistics() {
         if (printAllButton) {
           printAllButton.disabled = false;
         }
-      }
-    });
-
-    openFolderButton?.addEventListener('click', async () => {
-      openExportsBrowserView('individual_statistics');
-
-      try {
-        await request('/api/pdf/open-folder', {
-          method: 'POST',
-          body: JSON.stringify({ type: 'individual_statistics' })
-        }, { forceLocal: true });
-      } catch {
-        // La vue web est déjà ouverte; l'ouverture Explorer reste facultative.
       }
     });
 
