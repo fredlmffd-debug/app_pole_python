@@ -123,6 +123,57 @@ lecture seule) de la vraie base `app_pole/data/pole-scoring.sqlite` — jamais l
 utilisé par l'application Node en cours d'exécution. Chemin surchargeable via la variable
 `POLE_SCORING_REFERENCE_DB`.
 
+## Git — mémo rapide
+
+Commandes PowerShell à lancer depuis la racine de **ce** dépôt
+(`D:\PoleScoring\app_pole_python` — `app_pole` est un dépôt séparé, à traiter
+indépendamment avec les mêmes commandes depuis son propre dossier).
+
+**Voir ce qui a changé :**
+```powershell
+git status
+git diff
+```
+
+**Committer (message court) :**
+```powershell
+git add -A
+git commit -m "type: résumé court de la modification"
+```
+Types courants : `feat:` (nouvelle fonctionnalité), `fix:` (correctif), `docs:` (documentation).
+
+**Committer avec un message détaillé sur plusieurs lignes :**
+```powershell
+git commit -m @'
+feat: résumé court
+
+Explication plus détaillée sur une ou plusieurs lignes.
+'@
+```
+⚠️ Le `'@` de fermeture doit être seul sur sa ligne, collé à la marge de gauche
+(aucun espace avant) — sinon PowerShell renvoie une erreur de syntaxe.
+
+**Pousser vers GitHub :**
+```powershell
+git push origin main
+```
+
+**Récupérer les dernières modifications** (si une session Claude a travaillé
+ailleurs, ou depuis un autre poste) :
+```powershell
+git pull origin main
+```
+
+**Voir l'historique récent :**
+```powershell
+git log --oneline -10
+```
+
+**Annuler une modification non commitée sur un fichier** (avant `git add`) :
+```powershell
+git restore chemin\du\fichier
+```
+
 ## Packaging Windows
 
 - Bundle portable (dossier autonome, PyInstaller) :
