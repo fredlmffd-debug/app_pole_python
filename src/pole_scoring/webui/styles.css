@@ -3076,22 +3076,36 @@ button:active:not(:disabled),
    JUGES (ANNUAIRE + STATUT)
    ========================= */
 
+.judges-add-card {
+  grid-column: 1 / -1;
+}
+
+.judges-add-card > button[type="submit"] {
+  justify-self: center;
+  width: auto;
+  padding-left: 28px;
+  padding-right: 28px;
+}
+
 .judges-directory-card {
   grid-column: 1 / -1;
+  min-width: 0;
 }
 
 .judges-table {
   display: grid;
   gap: 0;
   border-radius: 22px;
-  overflow: hidden;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
   border: 1px solid rgba(84, 111, 150, 0.14);
   background: rgba(255, 255, 255, 0.62);
 }
 
 .judges-table-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(180px, 1fr) minmax(120px, 140px) minmax(140px, 180px);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(180px, 1fr) minmax(170px, 220px);
   gap: 16px;
   align-items: center;
   padding: 16px 18px;
@@ -3154,6 +3168,48 @@ button:active:not(:disabled),
   min-height: 30px;
   padding: 0 8px;
   font-size: 0.82rem;
+}
+
+.judge-delete-button {
+  width: auto;
+  justify-content: center;
+  min-height: 30px;
+  padding: 0 8px;
+  font-size: 0.82rem;
+  color: #a12525;
+  background: rgba(214, 48, 49, 0.1);
+  border-color: rgba(214, 48, 49, 0.3);
+}
+
+.judge-delete-button:hover {
+  background: rgba(214, 48, 49, 0.18);
+  border-color: rgba(214, 48, 49, 0.44);
+}
+
+.judges-list-toggle {
+  display: inline-flex;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(84, 111, 150, 0.1);
+}
+
+.judges-list-toggle-button {
+  border: 0;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.judges-list-toggle-button.is-active {
+  color: #0f4f85;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 4px 10px rgba(15, 35, 68, 0.1);
 }
 
 /* =========================

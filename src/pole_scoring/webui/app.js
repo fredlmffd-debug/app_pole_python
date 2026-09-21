@@ -52,7 +52,7 @@ const sectionMeta = {
   judges: {
     kicker: 'Base des juges',
     title: 'Juges',
-    subtitle: 'Créer, supprimer ou rendre inactif un juge.'
+    subtitle: 'Créer, modifier ou archiver un juge.'
   },
   competitors: {
     kicker: 'Plateaux',
@@ -3414,47 +3414,49 @@ function renderCompetitions(competitions) {
   });
 }
 
+let judgesListMode = 'active';
+
 function renderJudges(judges) {
   const root = document.querySelector('#judges');
-  const deleteSelect = document.querySelector('#judge-delete-select');
   const sortedJudges = [...judges].sort((left, right) => {
     const leftKey = `${left.lastName ?? ''} ${left.firstName ?? ''} ${left.name ?? ''}`.trim().toLocaleLowerCase('fr');
     const rightKey = `${right.lastName ?? ''} ${right.firstName ?? ''} ${right.name ?? ''}`.trim().toLocaleLowerCase('fr');
     return leftKey.localeCompare(rightKey, 'fr');
   });
 
-  deleteSelect.innerHTML = sortedJudges.length === 0
-    ? '<option value="">Aucun juge à supprimer</option>'
-    : `
-      <option value="" selected>Sélectionnez un juge à supprimer</option>
-      ${sortedJudges.map((judge) => `
-        <option value="${judge.id}">${escapeHtml(formatJudgeDirectoryLabel(judge))}</option>
-      `).join('')}
-    `;
+  const activeJudges = sortedJudges.filter((judge) => isJudgeActive(judge));
+  const archivedJudges = sortedJudges.filter((judge) => !isJudgeActive(judge));
+  const isArchivedMode = judgesListMode === 'archived';
+  const visibleJudges = isArchivedMode ? archivedJudges : activeJudges;
 
-  root.innerHTML = sortedJudges.length === 0
-    ? '<p class="empty-state">Aucun juge.</p>'
+  document.querySelectorAll('[data-judges-list-mode]').forEach((button) => {
+    const isActive = button.dataset.judgesListMode === judgesListMode;
+    button.classList.toggle('is-active', isActive);
+    button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    const count = button.dataset.judgesListMode === 'archived' ? archivedJudges.length : activeJudges.length;
+    button.textContent = `${button.dataset.judgesListMode === 'archived' ? 'Archivés' : 'Actifs'} (${count})`;
+  });
+
+  root.innerHTML = visibleJudges.length === 0
+    ? `<p class="empty-state">${isArchivedMode ? 'Aucun juge archivé.' : 'Aucun juge actif.'}</p>`
     : `
       <div class="judges-table" role="table" aria-label="Juges enregistrés">
         <div class="judges-table-row judges-table-head" role="row">
           <span role="columnheader">Nom</span>
           <span role="columnheader">Prénom</span>
           <span role="columnheader">Login</span>
-          <span role="columnheader">Statut</span>
           <span role="columnheader">Action</span>
         </div>
-        ${sortedJudges.map((judge) => `
+        ${visibleJudges.map((judge) => `
           <div class="judges-table-row" role="row">
             <span role="cell">${escapeHtml(judge.lastName || judge.name || '-')}</span>
             <span role="cell">${escapeHtml(judge.firstName || '-')}</span>
             <span role="cell">${escapeHtml(judge.login || 'Aucun login')}</span>
             <span role="cell">
-              <span class="judge-activity-badge ${isJudgeActive(judge) ? 'is-active' : 'is-inactive'}">${isJudgeActive(judge) ? 'Actif' : 'Désactivé'}</span>
-            </span>
-            <span role="cell">
               <div class="judge-row-actions">
                 <button type="button" class="ghost-button judge-edit-button" data-judge-edit="${judge.id}">Modifier</button>
-                <button type="button" class="ghost-button judge-activity-button" data-judge-toggle="${judge.id}" data-judge-next-active="${isJudgeActive(judge) ? '0' : '1'}">${isJudgeActive(judge) ? 'Désactiver' : 'Réactiver'}</button>
+                <button type="button" class="ghost-button judge-activity-button" data-judge-toggle="${judge.id}" data-judge-next-active="${isJudgeActive(judge) ? '0' : '1'}">${isJudgeActive(judge) ? 'Archiver' : 'Réactiver'}</button>
+                ${judge.canDelete ? `<button type="button" class="ghost-button judge-delete-button" data-judge-delete="${judge.id}">Supprimer</button>` : ''}
               </div>
             </span>
           </div>
@@ -6019,24 +6021,11 @@ document.querySelector('#judge-form').addEventListener('submit', async (event) =
   }
 });
 
-document.querySelector('#judge-delete-form').addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const judgeId = document.querySelector('#judge-delete-select').value;
-
-  if (!judgeId) {
-    showToast('Sélectionnez un juge à supprimer.', 'error');
-    return;
-  }
-
-  try {
-    await request(`/api/judges/${judgeId}`, {
-      method: 'DELETE'
-    });
-    await refresh();
-    showToast('Juge supprimé.', 'success');
-  } catch (error) {
-    showToast(error.message, 'error');
-  }
+document.querySelectorAll('[data-judges-list-mode]').forEach((button) => {
+  button.addEventListener('click', () => {
+    judgesListMode = button.dataset.judgesListMode === 'archived' ? 'archived' : 'active';
+    renderJudges(judgesState);
+  });
 });
 
 document.querySelector('#judges')?.addEventListener('click', async (event) => {
@@ -6060,6 +6049,37 @@ document.querySelector('#judges')?.addEventListener('click', async (event) => {
     return;
   }
 
+  const deleteJudgeId = target.dataset.judgeDelete;
+
+  if (deleteJudgeId) {
+    const judge = judgesState.find((item) => item.id === deleteJudgeId);
+    const confirmed = await showConfirmDialog({
+      title: 'Supprimer ce juge ?',
+      message: `Le juge "${formatJudgeDirectoryLabel(judge ?? {})}" sera supprimé définitivement. Cette action est irréversible.`,
+      confirmLabel: 'Oui, supprimer',
+      cancelLabel: 'Annuler'
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      target.disabled = true;
+      await request(`/api/judges/${deleteJudgeId}`, {
+        method: 'DELETE'
+      });
+      await refresh();
+      showToast('Juge supprimé.', 'success');
+    } catch (error) {
+      showToast(error.message, 'error');
+    } finally {
+      target.disabled = false;
+    }
+
+    return;
+  }
+
   const judgeId = target.dataset.judgeToggle;
 
   if (!judgeId) {
@@ -6075,7 +6095,7 @@ document.querySelector('#judges')?.addEventListener('click', async (event) => {
       body: JSON.stringify({ isActive: nextIsActive })
     });
     await refresh();
-    showToast(nextIsActive ? 'Juge réactivé.' : 'Juge désactivé.', 'success');
+    showToast(nextIsActive ? 'Juge réactivé.' : 'Juge archivé.', 'success');
   } catch (error) {
     showToast(error.message, 'error');
   } finally {

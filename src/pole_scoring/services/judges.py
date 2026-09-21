@@ -95,6 +95,9 @@ def list_judges(db: Database) -> list[dict]:
                COALESCE(last_name, '') AS lastName,
                COALESCE(login, '') AS login,
                is_active AS isActive,
+               NOT EXISTS(
+                 SELECT 1 FROM scores s WHERE s.judge_id = judges.id
+               ) AS canDelete,
                created_at AS createdAt,
                updated_at AS updatedAt
         FROM judges

@@ -81,7 +81,7 @@
             <span class="nav-icon" aria-hidden="true">
               <img src="/assets/icons/settings.svg" alt="">
             </span>
-            <span class="nav-text"><strong>Administration</strong><small>Configuration technique - RÉSERVÉ À L'ADMINISTRATEUR -</small></span>
+            <span class="nav-text"><strong>Administration</strong><small>Configuration technique - ADMINISTRATEUR -</small></span>
           </button>
           <button class="nav-item" type="button" data-nav-action="logout" data-title="Déconnexion" data-subtitle="Fermer la session et quitter proprement." data-tooltip="Déconnexion" hidden>
             <span class="nav-icon" aria-hidden="true">
@@ -322,29 +322,29 @@
 
         <section class="view" id="view-judges" data-view="judges">
           <div class="content-grid two-columns judges-grid">
-            <form id="judge-form" class="feature-card form-card" autocomplete="off">
+            <form id="judge-form" class="feature-card form-card judges-add-card" autocomplete="off">
               <div>
                 <h3>Ajouter un juge</h3>
               </div>
-              <label class="field-row"><span>Nom</span><input name="lastName" placeholder="Ex. Dupont" required></label>
-              <label class="field-row"><span>Prénom</span><input name="firstName" placeholder="Ex. Camille" required></label>
-              <label class="field-row"><span>Login</span><input name="login" placeholder="Ex. Camille.Dupont#1" autocapitalize="off" spellcheck="false" autocomplete="off" required></label>
-              <label class="field-row"><span>Mot de passe</span><input name="password" type="password" placeholder="Mot de passe du juge" autocomplete="new-password" required></label>
-              <button type="submit">Enregistrer le juge</button>
-            </form>
-
-            <form id="judge-delete-form" class="feature-card form-card">
-              <div>
-                <h3>Supprimer un juge</h3>
+              <div class="competition-form-inline-grid">
+                <label class="field-row field-row-condensed"><span>Nom</span><input name="lastName" placeholder="Ex. Dupont" required></label>
+                <label class="field-row field-row-condensed"><span>Prénom</span><input name="firstName" placeholder="Ex. Camille" required></label>
               </div>
-              <label class="field-row"><span>Juge</span><select id="judge-delete-select" name="judgeId" required></select></label>
-              <button type="submit" class="danger-button">Supprimer de la base</button>
+              <div class="competition-form-inline-grid">
+                <label class="field-row field-row-condensed"><span>Login</span><input name="login" placeholder="Ex. Camille.Dupont#1" autocapitalize="off" spellcheck="false" autocomplete="off" required></label>
+                <label class="field-row field-row-condensed"><span>Mot de passe</span><input name="password" type="password" placeholder="Mot de passe du juge" autocomplete="new-password" required></label>
+              </div>
+              <button type="submit">Enregistrer le juge</button>
             </form>
 
             <div class="feature-card list-card judges-directory-card">
               <div class="section-head compact">
                 <div>
                   <h3>Liste des Juges enregistrés</h3>
+                </div>
+                <div class="judges-list-toggle" role="tablist" aria-label="Filtrer les juges">
+                  <button type="button" class="judges-list-toggle-button is-active" data-judges-list-mode="active" aria-pressed="true">Actifs</button>
+                  <button type="button" class="judges-list-toggle-button" data-judges-list-mode="archived" aria-pressed="false">Archivés</button>
                 </div>
               </div>
               <div id="judges"></div>

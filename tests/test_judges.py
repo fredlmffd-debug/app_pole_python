@@ -76,6 +76,15 @@ def test_delete_judge_blocked_when_scores_exist(db: Database) -> None:
     with pytest.raises(ValueError):
         judges_service.delete_judge(db, judge["id"])
 
+    listed = judges_service.list_judges(db)
+    assert bool(next(item for item in listed if item["id"] == judge["id"])["canDelete"]) is False
+
+
+def test_list_judges_can_delete_true_when_no_scores(db: Database) -> None:
+    judge = judges_service.add_judge(db, first_name="Alice", last_name="Martin", login="alice", password="secret")
+    listed = judges_service.list_judges(db)
+    assert bool(next(item for item in listed if item["id"] == judge["id"])["canDelete"]) is True
+
 
 def test_clear_judge_presence(db: Database) -> None:
     from pole_scoring.utils.time import now
