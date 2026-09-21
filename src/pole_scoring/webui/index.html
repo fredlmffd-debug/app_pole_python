@@ -331,7 +331,7 @@
                 <label class="field-row field-row-condensed"><span>Prénom</span><input name="firstName" placeholder="Ex. Camille" required></label>
               </div>
               <div class="competition-form-inline-grid">
-                <label class="field-row field-row-condensed"><span>Login</span><input name="login" placeholder="Ex. Camille.Dupont#1" autocapitalize="off" spellcheck="false" autocomplete="off" required></label>
+                <label class="field-row field-row-condensed"><span>Login</span><input name="login" placeholder="Login 20 caractères maximum" maxlength="20" title="20 caractères maximum" autocapitalize="off" spellcheck="false" autocomplete="off" required></label>
                 <label class="field-row field-row-condensed"><span>Mot de passe</span><input name="password" type="password" placeholder="Mot de passe du juge" autocomplete="new-password" required></label>
               </div>
               <button type="submit">Enregistrer le juge</button>
@@ -783,7 +783,7 @@
         <input id="app-judge-edit-dialog-id" type="hidden">
         <label class="app-access-dialog__field"><span>Nom</span><input id="app-judge-edit-last-name" type="text" autocomplete="off" required></label>
         <label class="app-access-dialog__field"><span>Prénom</span><input id="app-judge-edit-first-name" type="text" autocomplete="off" required></label>
-        <label class="app-access-dialog__field"><span>Login</span><input id="app-judge-edit-login" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" required></label>
+        <label class="app-access-dialog__field"><span>Login</span><input id="app-judge-edit-login" type="text" maxlength="20" title="20 caractères maximum" autocomplete="off" autocapitalize="off" spellcheck="false" required></label>
         <label class="app-access-dialog__field"><span>Mot de passe</span><input id="app-judge-edit-password" type="password" autocomplete="new-password" placeholder="********"></label>
         <div class="app-access-dialog__actions">
           <button id="app-judge-edit-dialog-cancel" class="ghost-button" type="button">Annuler</button>

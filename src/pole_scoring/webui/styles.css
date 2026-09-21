@@ -299,6 +299,7 @@ p {
   min-height: 0;
   padding: 28px;
   overflow: auto;
+  scrollbar-gutter: stable;
   z-index: 1;
 }
 
@@ -3105,7 +3106,8 @@ button:active:not(:disabled),
 
 .judges-table-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(180px, 1fr) minmax(170px, 220px);
+  grid-template-columns: minmax(96px, 1fr) minmax(96px, 1fr) minmax(120px, 160px) minmax(220px, 280px);
+  min-width: 640px;
   gap: 16px;
   align-items: center;
   padding: 16px 18px;
@@ -3153,6 +3155,7 @@ button:active:not(:disabled),
   min-height: 30px;
   padding: 0 8px;
   font-size: 0.82rem;
+  white-space: nowrap;
 }
 
 .judge-row-actions {
@@ -3168,6 +3171,7 @@ button:active:not(:disabled),
   min-height: 30px;
   padding: 0 8px;
   font-size: 0.82rem;
+  white-space: nowrap;
 }
 
 .judge-delete-button {
@@ -3176,6 +3180,7 @@ button:active:not(:disabled),
   min-height: 30px;
   padding: 0 8px;
   font-size: 0.82rem;
+  white-space: nowrap;
   color: #a12525;
   background: rgba(214, 48, 49, 0.1);
   border-color: rgba(214, 48, 49, 0.3);
@@ -3210,6 +3215,18 @@ button:active:not(:disabled),
   color: #0f4f85;
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 4px 10px rgba(15, 35, 68, 0.1);
+}
+
+.judges-list-toggle-button.is-active[data-judges-list-mode="active"] {
+  color: #1f6f34;
+  background: rgba(57, 173, 87, 0.22);
+  box-shadow: 0 4px 10px rgba(31, 111, 52, 0.14);
+}
+
+.judges-list-toggle-button.is-active[data-judges-list-mode="archived"] {
+  color: #8b2222;
+  background: rgba(218, 90, 90, 0.24);
+  box-shadow: 0 4px 10px rgba(139, 34, 34, 0.14);
 }
 
 /* =========================
@@ -6290,6 +6307,7 @@ pre {
 
   .judges-table-row {
     grid-template-columns: 1fr;
+    min-width: 0;
   }
 
   .competitor-table-row {
