@@ -2839,13 +2839,12 @@ button:active:not(:disabled),
 #view-competitors.is-active {
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  min-height: auto;
 }
 
 .competitors-management-grid {
   flex: 1;
-  min-height: 0;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(360px, 1fr);
 }
 
 .competitors-table-card {
@@ -2928,7 +2927,8 @@ button:active:not(:disabled),
   gap: 0;
   border-radius: 22px;
   flex: 1;
-  min-height: 110px;
+  min-height: 260px;
+  max-height: 520px;
   overflow: auto;
   border: 1px solid rgba(84, 111, 150, 0.14);
   background: rgba(255, 255, 255, 0.62);
