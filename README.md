@@ -63,6 +63,7 @@ existants côté Node, plutôt que copier le fichier `.sqlite` à la main
 
 ```powershell
 # 1. Démarrer la version Python sur un port isolé, base vide
+#    (raccourci équivalent : scripts\run-test-mode.ps1)
 $env:APP_PORT = "4390"
 $env:POLE_SCORING_DATA_DIR = "$PWD\data-test"
 .venv\Scripts\python -m pole_scoring
@@ -71,6 +72,10 @@ $env:POLE_SCORING_DATA_DIR = "$PWD\data-test"
 #    port habituel, Python sur 4390) :
 powershell -ExecutionPolicy Bypass -File scripts\import-node-database.ps1
 ```
+
+Le script `scripts\run-test-mode.ps1` fait l'étape 1 en une seule commande
+(`-Port`/`-DataDir` optionnels, valeurs par défaut identiques : `4390` et
+`data-test\`).
 
 Le script s'appuie sur les routes `/api/db/export` (Node) et `/api/db/import`
 (Python) déjà en place et testées en Phase 5 — `export` fait un checkpoint
