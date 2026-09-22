@@ -1970,6 +1970,18 @@ button:active:not(:disabled),
   flex-wrap: wrap;
 }
 
+#competition-form .competition-step-actions {
+  justify-content: center;
+}
+
+#competition-edit-form > button[type="submit"],
+#competition-delete-form > button[type="submit"] {
+  justify-self: center;
+  width: auto;
+  padding-left: 28px;
+  padding-right: 28px;
+}
+
 #view-sync .content-grid.two-columns {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
