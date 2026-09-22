@@ -1535,6 +1535,20 @@ function getFilteredCompetitions() {
   });
 }
 
+function getEditableCompetitions() {
+  const filteredCompetitions = getFilteredCompetitions();
+
+  if (activeCompetitionSeasonFilter === 'all') {
+    return filteredCompetitions;
+  }
+
+  const draftCompetitions = competitionsState.filter((competition) => competition.status === 'draft');
+  return [
+    ...filteredCompetitions,
+    ...draftCompetitions.filter((competition) => !filteredCompetitions.includes(competition))
+  ];
+}
+
 function formatJudgeDirectoryLabel(judge) {
   const lastName = String(judge.lastName ?? '').trim();
   const firstName = String(judge.firstName ?? '').trim();
@@ -1707,6 +1721,79 @@ function showInputDialog({
       inputElement.select();
     });
   });
+}
+
+let competitionStatusDialogCompetitionId = null;
+let competitionStatusDialogSelectedStatus = null;
+let competitionStatusDialogActiveElement = null;
+
+function updateCompetitionStatusDialogOptions() {
+  const otherActiveCompetition = competitionsState.find((item) => item.status === 'active' && item.id !== competitionStatusDialogCompetitionId) ?? null;
+
+  document.querySelectorAll('[data-competition-status-option]').forEach((button) => {
+    const value = button.dataset.competitionStatusOption;
+    const isSelected = value === competitionStatusDialogSelectedStatus;
+    button.classList.toggle('is-active', isSelected);
+    button.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+
+    if (value === 'active' && otherActiveCompetition) {
+      button.disabled = true;
+      button.title = `Une compétition est déjà active (${otherActiveCompetition.name}). Clôturez-la avant d'en activer une nouvelle.`;
+    } else {
+      button.disabled = false;
+      button.title = '';
+    }
+  });
+}
+
+function handleCompetitionStatusDialogKeydown(event) {
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    closeCompetitionStatusDialog();
+  }
+}
+
+function openCompetitionStatusDialog(competitionId) {
+  const competition = competitionsState.find((item) => item.id === competitionId);
+  const root = document.querySelector('#competition-status-dialog');
+  const messageElement = document.querySelector('#competition-status-dialog-message');
+
+  if (!competition || !root || !messageElement) {
+    showToast('Compétition introuvable.', 'error');
+    return;
+  }
+
+  competitionStatusDialogCompetitionId = competitionId;
+  competitionStatusDialogSelectedStatus = competition.status;
+  competitionStatusDialogActiveElement = document.activeElement;
+
+  messageElement.textContent = `${competition.name} — statut actuel : ${getCompetitionStatusLabel(competition.status)}.`;
+  updateCompetitionStatusDialogOptions();
+
+  root.hidden = false;
+  document.addEventListener('keydown', handleCompetitionStatusDialogKeydown);
+
+  window.requestAnimationFrame(() => {
+    document.querySelector(`[data-competition-status-option="${competition.status}"]`)?.focus();
+  });
+}
+
+function closeCompetitionStatusDialog() {
+  const root = document.querySelector('#competition-status-dialog');
+
+  if (root) {
+    root.hidden = true;
+  }
+
+  document.removeEventListener('keydown', handleCompetitionStatusDialogKeydown);
+  competitionStatusDialogCompetitionId = null;
+  competitionStatusDialogSelectedStatus = null;
+
+  const activeElement = competitionStatusDialogActiveElement;
+  competitionStatusDialogActiveElement = null;
+  if (activeElement instanceof HTMLElement) {
+    activeElement.focus();
+  }
 }
 
 function hideAccessAuthDialog(result) {
@@ -2257,6 +2344,66 @@ document.querySelector('#app-input-dialog-form')?.addEventListener('submit', (ev
   event.preventDefault();
   const inputElement = document.querySelector('#app-input-dialog-value');
   hideInputDialog(inputElement?.value ?? '');
+});
+
+document.querySelector('#competition-status-dialog')?.addEventListener('click', (event) => {
+  if (event.target === event.currentTarget) {
+    closeCompetitionStatusDialog();
+  }
+});
+
+document.querySelector('#competition-status-dialog-cancel')?.addEventListener('click', () => {
+  closeCompetitionStatusDialog();
+});
+
+document.querySelectorAll('[data-competition-status-option]').forEach((button) => {
+  button.addEventListener('click', () => {
+    if (button.disabled) {
+      return;
+    }
+
+    competitionStatusDialogSelectedStatus = button.dataset.competitionStatusOption;
+    updateCompetitionStatusDialogOptions();
+  });
+});
+
+document.querySelector('#competition-status-dialog-confirm')?.addEventListener('click', async () => {
+  const competitionId = competitionStatusDialogCompetitionId;
+  const selectedStatus = competitionStatusDialogSelectedStatus;
+  const competition = competitionsState.find((item) => item.id === competitionId);
+
+  if (!competitionId || !competition) {
+    closeCompetitionStatusDialog();
+    return;
+  }
+
+  if (selectedStatus === competition.status) {
+    closeCompetitionStatusDialog();
+    return;
+  }
+
+  try {
+    await request(`/api/competitions/${competitionId}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        name: competition.name,
+        location: competition.location ?? '',
+        eventDate: competition.eventDate ?? '',
+        season: competition.season ?? '',
+        competitionLevel: competition.competitionLevel ?? 'defi',
+        region: competition.region ?? '',
+        zone: competition.zone ?? '',
+        judgeCount: competition.judgeCount,
+        scrutateurName: competition.scrutateurName ?? '',
+        status: selectedStatus
+      })
+    });
+    closeCompetitionStatusDialog();
+    await refresh();
+    showToast('Statut de la compétition mis à jour.', 'success');
+  } catch (error) {
+    showToast(error.message, 'error');
+  }
 });
 
 document.querySelector('#app-access-dialog')?.addEventListener('click', (event) => {
@@ -3181,11 +3328,12 @@ function refreshCompetitionManagementControls() {
   updateCompetitionRegionalFields('create');
   activeCompetitionSeasonFilter = setSeasonSelectOptions(filterSelect, activeCompetitionSeasonFilter, { includeAll: true });
   const filteredCompetitions = getFilteredCompetitions();
+  const editableCompetitions = getEditableCompetitions();
 
   const selectedEditId = setCompetitionSelectOptions(
     editSelect,
-    filteredCompetitions,
-    filteredCompetitions.length === 0 ? 'Aucune compétition à modifier' : 'Sélectionnez une compétition à modifier',
+    editableCompetitions,
+    editableCompetitions.length === 0 ? 'Aucune compétition à modifier' : 'Sélectionnez une compétition à modifier',
     editSelect?.value ?? ''
   );
   const selectedDeleteId = setCompetitionSelectOptions(
@@ -3333,12 +3481,13 @@ function renderCompetitions(competitions) {
                 ${(() => {
                   const indicator = getCompetitionDirectoryIndicatorMeta(competition);
                   return `
-                <span
+                <button
+                  type="button"
                   class="competition-security-badge ${indicator.modifier}"
-                  role="img"
-                  aria-label="${escapeHtml(indicator.label)}"
+                  data-competition-status-trigger="${escapeHtml(competition.id)}"
+                  aria-label="${escapeHtml(indicator.label)}. Cliquer pour changer le statut."
                   title="${escapeHtml(indicator.label)}"
-                ></span>
+                ></button>
                   `;
                 })()}
               </span>
@@ -3410,6 +3559,12 @@ function renderCompetitions(competitions) {
       }
 
       showToast('Fenetre Scoring-shadows ouverte.', 'success');
+    });
+  });
+
+  root.querySelectorAll('[data-competition-status-trigger]').forEach((button) => {
+    button.addEventListener('click', () => {
+      openCompetitionStatusDialog(button.dataset.competitionStatusTrigger);
     });
   });
 }

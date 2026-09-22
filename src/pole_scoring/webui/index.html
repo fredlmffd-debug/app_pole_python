@@ -724,6 +724,23 @@
       </form>
     </div>
 
+    <div id="competition-status-dialog" class="app-input-dialog" hidden>
+      <div id="competition-status-dialog-card" class="app-input-dialog__card" role="dialog" aria-modal="true" aria-labelledby="competition-status-dialog-title" aria-describedby="competition-status-dialog-message">
+        <p class="eyebrow app-input-dialog__eyebrow">Statut</p>
+        <h3 id="competition-status-dialog-title">Changer le statut</h3>
+        <p id="competition-status-dialog-message"></p>
+        <div class="competition-status-dialog-options" role="group" aria-label="Statut de la compétition">
+          <button class="competition-mode-button" type="button" data-competition-status-option="draft">Brouillon</button>
+          <button class="competition-mode-button" type="button" data-competition-status-option="active">Active</button>
+          <button class="competition-mode-button" type="button" data-competition-status-option="closed">Clôturée</button>
+        </div>
+        <div class="app-input-dialog__actions">
+          <button id="competition-status-dialog-cancel" class="ghost-button" type="button">Annuler</button>
+          <button id="competition-status-dialog-confirm" type="button">Enregistrer le statut</button>
+        </div>
+      </div>
+    </div>
+
     <div id="app-access-dialog" class="app-access-dialog" hidden>
       <form id="app-access-dialog-form" class="app-access-dialog__card" role="dialog" aria-modal="true" aria-labelledby="app-access-dialog-title" aria-describedby="app-access-dialog-message">
         <p class="eyebrow app-access-dialog__eyebrow">Accès sécurisé</p>

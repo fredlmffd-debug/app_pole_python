@@ -2620,8 +2620,10 @@ button:active:not(:disabled),
   justify-content: center;
   width: 28px;
   height: 28px;
+  padding: 0;
   border-radius: 999px;
   box-shadow: 0 10px 18px rgba(15, 35, 68, 0.1);
+  cursor: pointer;
 }
 
 .competition-security-badge::before {
@@ -4050,6 +4052,22 @@ button:active:not(:disabled),
   justify-content: flex-end;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+.competition-status-dialog-options {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.competition-status-dialog-options .competition-mode-button {
+  min-width: 120px;
+}
+
+.competition-status-dialog-options .competition-mode-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 .app-access-dialog {
   position: fixed;
