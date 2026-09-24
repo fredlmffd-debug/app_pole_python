@@ -4062,7 +4062,6 @@ function computeConductorSummaryFallback(competitorId, allScores = [], judgeAssi
   const artisticJudgeIds = new Set();
   const technicalJudgeIds = new Set();
   const headJudgeIds = new Set();
-  const technicalDenominatorJudgeIds = new Set();
 
   (judgeAssignments ?? []).forEach((assignment) => {
     if (assignment?.isTrainee) {
@@ -4079,14 +4078,12 @@ function computeConductorSummaryFallback(competitorId, allScores = [], judgeAssi
 
     if (role === 'artistique') {
       artisticJudgeIds.add(judgeId);
-      technicalDenominatorJudgeIds.add(judgeId);
       return;
     }
 
     if (role === 'head') {
       headJudgeIds.add(judgeId);
       technicalJudgeIds.add(judgeId);
-      technicalDenominatorJudgeIds.add(judgeId);
       return;
     }
 
@@ -4128,7 +4125,7 @@ function computeConductorSummaryFallback(competitorId, allScores = [], judgeAssi
   });
 
   const artisticDenominator = artisticJudgeIds.size;
-  const technicalDenominator = technicalDenominatorJudgeIds.size;
+  const technicalDenominator = technicalJudgeIds.size;
 
   const artisticScore = artisticDenominator > 0
     ? artisticTotal / artisticDenominator
