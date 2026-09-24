@@ -533,6 +533,26 @@ function getOpenConductorCategories() {
   return openCategories;
 }
 
+function getOpenConductorScoreDetails() {
+  const accordionRoot = document.querySelector('#conductor-category-accordion');
+
+  if (!accordionRoot) {
+    return new Set();
+  }
+
+  const openScoreDetails = new Set();
+
+  accordionRoot.querySelectorAll('.conductor-scores-details:not([hidden])').forEach((detailsNode) => {
+    const competitorId = detailsNode.dataset.conductorScores;
+
+    if (competitorId) {
+      openScoreDetails.add(competitorId);
+    }
+  });
+
+  return openScoreDetails;
+}
+
 // Synchronisation de l'etat conducteur apres sauvegarde/fermeture des popups de saisie.
 
 window.addEventListener('message', (event) => {
@@ -598,7 +618,8 @@ window.addEventListener('message', (event) => {
   }
 
   const openCategoriesState = getOpenConductorCategories();
-  refreshConductorSection(activeCompetition, { openCategories: openCategoriesState }).catch(() => {
+  const openScoreDetailsState = getOpenConductorScoreDetails();
+  refreshConductorSection(activeCompetition, { openCategories: openCategoriesState, openScoreDetails: openScoreDetailsState }).catch(() => {
     // No-op: un echec de refresh n'empeche pas la saisie popup de continuer.
   });
 });
@@ -4366,6 +4387,7 @@ function renderConductorSection(activeCompetition, competitors, options = {}, sc
   const progressBar = document.querySelector('#conductor-progress-bar');
   const accordionRoot = document.querySelector('#conductor-category-accordion');
   const openCategories = options.openCategories instanceof Set ? options.openCategories : new Set();
+  const openScoreDetails = options.openScoreDetails instanceof Set ? options.openScoreDetails : new Set();
 
   if (!summaryRoot || !progressValue || !progressCurrent || !progressBar || !accordionRoot) {
     return;
@@ -4436,7 +4458,8 @@ function renderConductorSection(activeCompetition, competitors, options = {}, sc
         showToast('Tablettes libérées. Vous pouvez envoyer un nouveau passage.', 'success');
 
         const openCategoriesState = getOpenConductorCategories();
-        renderConductorSection(activeCompetition, competitors, { openCategories: openCategoriesState }, scoresMap, judgingStateMap, scoreSummaryMap);
+        const openScoreDetailsState = getOpenConductorScoreDetails();
+        renderConductorSection(activeCompetition, competitors, { openCategories: openCategoriesState, openScoreDetails: openScoreDetailsState }, scoresMap, judgingStateMap, scoreSummaryMap);
       } catch (error) {
         showToast(error.message, 'error');
         releaseTabletsButton.disabled = false;
@@ -4545,10 +4568,10 @@ function renderConductorSection(activeCompetition, competitors, options = {}, sc
                     ` : '<span class="conductor-action-disabled-note">Mode d\'envoi indisponible</span>'}
                     <button type="button" class="ghost-button conductor-action-button conductor-status-action${competitor.status === 'forfeit' ? ' is-selected' : ''}" data-conductor-action="status" data-conductor-status="forfeit" data-competitor-id="${competitor.id}">${forfeitLabel}</button>
                     <button type="button" class="ghost-button conductor-action-button conductor-status-action${competitor.status === 'disqualified' ? ' is-selected' : ''}" data-conductor-action="status" data-conductor-status="disqualified" data-competitor-id="${competitor.id}">${disqualificationLabel}</button>
-                    ${isFullyScored ? `<button type="button" class="ghost-button conductor-action-button conductor-scores-button" data-conductor-action="view-scores" data-competitor-id="${competitor.id}">Voir les notes</button>` : ''}
+                    ${isFullyScored ? `<button type="button" class="ghost-button conductor-action-button conductor-scores-button${openScoreDetails.has(String(competitor.id)) ? ' is-selected' : ''}" data-conductor-action="view-scores" data-competitor-id="${competitor.id}">Voir les notes</button>` : ''}
                   </div>
                   ${isFullyScored ? `
-                    <div class="conductor-scores-details" data-conductor-scores="${competitor.id}" hidden>
+                    <div class="conductor-scores-details" data-conductor-scores="${competitor.id}" ${openScoreDetails.has(String(competitor.id)) ? '' : 'hidden'}>
                       ${buildConductorScoreDetailsHtml(judgingStateBase, scoreSummaryMap.get(String(competitor.id)) ?? null)}
                     </div>
                   ` : ''}
@@ -4565,21 +4588,23 @@ function renderConductorSection(activeCompetition, competitors, options = {}, sc
   accordionRoot.querySelectorAll('[data-conductor-mode-switch]').forEach((input) => {
     input.addEventListener('change', () => {
       const openCategoriesState = getOpenConductorCategories();
+      const openScoreDetailsState = getOpenConductorScoreDetails();
       const competitorId = input.dataset.competitorId;
       setConductorDispatchMode(competitorId, input.checked ? 'tablet' : 'manual');
       if (input.checked) {
         setConductorManualBatchSelected(competitorId, false);
       }
-      renderConductorSection(activeCompetition, competitors, { openCategories: openCategoriesState }, scoresMap, judgingStateMap, scoreSummaryMap);
+      renderConductorSection(activeCompetition, competitors, { openCategories: openCategoriesState, openScoreDetails: openScoreDetailsState }, scoresMap, judgingStateMap, scoreSummaryMap);
     });
   });
 
   accordionRoot.querySelectorAll('[data-conductor-batch-select]').forEach((input) => {
     input.addEventListener('change', () => {
       const openCategoriesState = getOpenConductorCategories();
+      const openScoreDetailsState = getOpenConductorScoreDetails();
       const competitorId = input.dataset.competitorId;
       setConductorManualBatchSelected(competitorId, input.checked);
-      renderConductorSection(activeCompetition, competitors, { openCategories: openCategoriesState }, scoresMap, judgingStateMap, scoreSummaryMap);
+      renderConductorSection(activeCompetition, competitors, { openCategories: openCategoriesState, openScoreDetails: openScoreDetailsState }, scoresMap, judgingStateMap, scoreSummaryMap);
     });
   });
 
@@ -4651,6 +4676,7 @@ function renderConductorSection(activeCompetition, competitors, options = {}, sc
   accordionRoot.querySelectorAll('[data-conductor-action="validate"]').forEach((button) => {
     button.addEventListener('click', async () => {
       const openCategoriesState = getOpenConductorCategories();
+      const openScoreDetailsState = getOpenConductorScoreDetails();
       const competitorId = button.dataset.competitorId;
       const targetCompetitor = competitors.find((competitor) => competitor.id === competitorId);
 
@@ -4706,7 +4732,7 @@ function renderConductorSection(activeCompetition, competitors, options = {}, sc
         }
 
         setConductorPassageValidated(activeCompetition.id, competitorId, true);
-        renderConductorSection(activeCompetition, competitors, { openCategories: openCategoriesState }, scoresMap, judgingStateMap, scoreSummaryMap);
+        renderConductorSection(activeCompetition, competitors, { openCategories: openCategoriesState, openScoreDetails: openScoreDetailsState }, scoresMap, judgingStateMap, scoreSummaryMap);
         if (dispatchMode === 'tablet') {
           showToast('Passage envoye aux tablettes.', 'success');
         }
@@ -4722,6 +4748,7 @@ function renderConductorSection(activeCompetition, competitors, options = {}, sc
   accordionRoot.querySelectorAll('[data-conductor-action="status"]').forEach((button) => {
     button.addEventListener('click', async () => {
       const openCategoriesState = getOpenConductorCategories();
+      const openScoreDetailsState = getOpenConductorScoreDetails();
       const competitorId = button.dataset.competitorId;
       const targetStatus = button.dataset.conductorStatus;
       const targetCompetitor = competitors.find((competitor) => competitor.id === competitorId);
@@ -4742,7 +4769,7 @@ function renderConductorSection(activeCompetition, competitors, options = {}, sc
           setConductorPassageValidated(activeCompetition.id, competitorId, false);
         }
 
-        await refreshConductorSection(activeCompetition, { openCategories: openCategoriesState });
+        await refreshConductorSection(activeCompetition, { openCategories: openCategoriesState, openScoreDetails: openScoreDetailsState });
 
         try {
           await renderCompetitorManagementSection();
@@ -4933,7 +4960,8 @@ function ensureConductorTabletSyncPolling() {
 
     try {
       const openCategoriesState = getOpenConductorCategories();
-      await refreshConductorSection(activeCompetition, { openCategories: openCategoriesState });
+      const openScoreDetailsState = getOpenConductorScoreDetails();
+      await refreshConductorSection(activeCompetition, { openCategories: openCategoriesState, openScoreDetails: openScoreDetailsState });
     } catch {
     }
   }, CONDUCTOR_TABLET_SYNC_REFRESH_MS);
