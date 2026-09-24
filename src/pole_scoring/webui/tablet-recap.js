@@ -25,6 +25,21 @@ async function request(path, options = {}) {
   return payload ?? {};
 }
 
+// window.close() ne fait rien sur une fenetre desktop creee via
+// webview.create_window() (elle n'a pas ete ouverte par un window.open() de
+// script, seul cas que WebView2 honore) : sans ce relai vers l'API Python
+// exposee en js_api, la fenetre resterait ouverte indefiniment apres une
+// action qui a pourtant reussi cote serveur. Comportement navigateur/Node
+// inchange (fallback sur window.close()).
+function closeThisWindow() {
+  if (window.pywebview?.api?.close_self) {
+    window.pywebview.api.close_self().catch(() => {});
+    return;
+  }
+
+  window.close();
+}
+
 const ROLE_ORDER = ['artistique', 'technique', 'head'];
 
 const state = {
@@ -365,7 +380,7 @@ async function finalizeRecap() {
 
     notifyConductor('tablet-recap-finalized');
 
-    window.close();
+    closeThisWindow();
   } catch (error) {
     state.finalizeInProgress = false;
 

@@ -15,6 +15,21 @@ async function request(path, options = {}) {
   return payload;
 }
 
+// window.close() ne fait rien sur une fenetre desktop creee via
+// webview.create_window() (elle n'a pas ete ouverte par un window.open() de
+// script, seul cas que WebView2 honore) : sans ce relai vers l'API Python
+// exposee en js_api, la fenetre resterait ouverte indefiniment apres une
+// action qui a pourtant reussi cote serveur. Comportement navigateur/Node
+// inchange (fallback sur window.close()).
+function closeThisWindow() {
+  if (window.pywebview?.api?.close_self) {
+    window.pywebview.api.close_self().catch(() => {});
+    return;
+  }
+
+  window.close();
+}
+
 const MANUAL_BATCH_DRAFT_STORAGE_PREFIX = 'manual-scoring-batch-draft:v1';
 
 function escapeHtml(value) {
@@ -694,7 +709,7 @@ async function bootstrapBatchManualScoring() {
     }
 
     document.querySelector('#manual-batch-close-button')?.addEventListener('click', () => {
-      window.close();
+      closeThisWindow();
     });
 
     form.addEventListener('focusout', (event) => {
@@ -863,7 +878,7 @@ async function bootstrapBatchManualScoring() {
 
         clearBatchDraft(draftStorageKey);
 
-        window.close();
+        closeThisWindow();
       } catch (error) {
         feedback.textContent = error.message;
         feedback.className = 'manual-form-feedback is-error';

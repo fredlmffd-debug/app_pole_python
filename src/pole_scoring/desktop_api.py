@@ -37,6 +37,37 @@ def _make_forget_callback(window_key: str, window: "Window"):
     return _forget_window
 
 
+def _close_child_window(window_key: str) -> bool:
+    with _child_windows_lock:
+        existing = _child_windows.pop(window_key, None)
+
+    if existing is None:
+        return False
+
+    try:
+        existing.destroy()
+    except Exception:
+        return False
+
+    return True
+
+
+class ChildWindowApi:
+    """Expose a une fenetre secondaire (tablet-recap, saisie manuelle...) via
+    js_api=..., pour qu'elle puisse se fermer elle-meme. JS window.close() ne
+    fait rien sur une fenetre creee par webview.create_window() (elle n'a pas
+    ete ouverte par un window.open() de script, seul cas que WebView2 honore) :
+    sans cette API, la fenetre reste ouverte indefiniment apres un clic sur
+    "Valider" (bouton bloque sur "Validation..." alors que la requete a bien
+    reussi cote serveur)."""
+
+    def __init__(self, window_key: str) -> None:
+        self._window_key = window_key
+
+    def close_self(self) -> bool:
+        return _close_child_window(self._window_key)
+
+
 class DesktopApi:
     """Expose a la fenetre principale (js_api=...) uniquement — les fenetres
     secondaires n'ont pas besoin d'en ouvrir d'autres elles-memes."""
@@ -68,6 +99,12 @@ class DesktopApi:
 
             if existing is not None:
                 try:
+                    # Reutiliser la fenetre existante ne doit jamais afficher son
+                    # ancien contenu : un nouveau passage (autre competitorId dans
+                    # l'URL) doit recharger la page, sinon le JS de l'ancienne page
+                    # reste en memoire avec son etat perime (ex. finalizeInProgress
+                    # bloque a true apres une premiere validation reussie).
+                    existing.load_url(url)
                     existing.restore()
                     existing.show()
                     return True
@@ -80,6 +117,7 @@ class DesktopApi:
                 width=_safe_dimension(width, 1000),
                 height=_safe_dimension(height, 800),
                 min_size=(480, 360),
+                js_api=ChildWindowApi(window_key),
             )
 
             if new_window is None:
@@ -91,20 +129,7 @@ class DesktopApi:
         return True
 
     def close_window(self, name: str) -> bool:
-        window_key = str(name or "").strip()
-
-        with _child_windows_lock:
-            existing = _child_windows.pop(window_key, None)
-
-        if existing is None:
-            return False
-
-        try:
-            existing.destroy()
-        except Exception:
-            return False
-
-        return True
+        return _close_child_window(str(name or "").strip())
 
     def toggle_fullscreen(self) -> bool:
         if self._main_window is None:
