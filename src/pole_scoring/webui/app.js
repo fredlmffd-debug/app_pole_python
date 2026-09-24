@@ -3940,7 +3940,7 @@ function groupCompetitorsByCategory(competitors) {
     });
 }
 
-function buildConductorProgress(competitionId, competitors) {
+function buildConductorProgress(competitors, judgingStateMap = new Map(), competitionId = '') {
   const activeCompetitors = competitors
     .filter((competitor) => competitor.status !== 'withdrawn' && competitor.status !== 'forfeit' && competitor.status !== 'disqualified')
     .sort((left, right) => {
@@ -3949,18 +3949,36 @@ function buildConductorProgress(competitionId, competitors) {
       return leftOrder - rightOrder;
     });
 
+  const isCompetitorJudged = (competitor) => judgingStateMap.get(competitor.id)?.stateKey === 'judged';
+  const presenterActiveCompetitorId = String(conductorState.presenterActivePassageId ?? '').trim();
+
+  // "En cours" = le passage a été envoyé (tablettes) ou validé (manuel), mais
+  // pas encore entièrement jugé — même définition que le badge de la liste.
+  const isCompetitorInProgress = (competitor) => {
+    if (isCompetitorJudged(competitor)) {
+      return false;
+    }
+
+    const competitorId = String(competitor.id ?? '').trim();
+    const mode = getConductorDispatchMode(competitorId);
+
+    return mode === 'tablet'
+      ? presenterActiveCompetitorId === competitorId
+      : isConductorPassageValidated(competitionId, competitorId);
+  };
+
   const excludedCount = competitors.length - activeCompetitors.length;
-  const completedCount = activeCompetitors.filter((competitor) => isConductorPassageValidated(competitionId, competitor.id)).length;
-  const currentCompetitor = completedCount > 0
-    ? activeCompetitors.find((competitor) => !isConductorPassageValidated(competitionId, competitor.id)) ?? null
-    : null;
+  const completedCount = activeCompetitors.filter(isCompetitorJudged).length;
+  const currentCompetitor = activeCompetitors.find(isCompetitorInProgress) ?? null;
+  const displayedCount = currentCompetitor ? completedCount + 1 : completedCount;
   const progressPercent = activeCompetitors.length > 0
-    ? Math.round((completedCount / activeCompetitors.length) * 100)
+    ? Math.round((displayedCount / activeCompetitors.length) * 100)
     : 0;
 
   return {
     current: currentCompetitor,
     completedCount,
+    displayedCount,
     currentIndex: currentCompetitor ? completedCount + 1 : 0,
     total: activeCompetitors.length,
     excludedCount,
@@ -4438,8 +4456,8 @@ function renderConductorSection(activeCompetition, competitors, options = {}, sc
     return;
   }
 
-  const progress = buildConductorProgress(activeCompetition.id, competitors);
-  progressValue.textContent = `${progress.completedCount} / ${progress.total}`;
+  const progress = buildConductorProgress(competitors, judgingStateMap, activeCompetition.id);
+  progressValue.textContent = `${progress.displayedCount} / ${progress.total}`;
   progressBar.style.width = `${progress.progressPercent}%`;
 
   if (progress.current) {
