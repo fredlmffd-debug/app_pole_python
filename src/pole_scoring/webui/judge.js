@@ -1299,7 +1299,7 @@ function resetJudgeStateUi() {
   updateConnectedUi();
 }
 
-async function performJudgeLogout({ silent = false, bestEffort = false } = {}) {
+async function performJudgeLogout({ bestEffort = false } = {}) {
   stopBackgroundLoops();
 
   if (bestEffort) {
@@ -1310,10 +1310,6 @@ async function performJudgeLogout({ silent = false, bestEffort = false } = {}) {
 
   clearStoredJudgeSession();
   resetJudgeStateUi();
-
-  if (!silent) {
-    setScoreResult('Déconnexion effectuée.');
-  }
 }
 
 function formatPassageLabel(activePassage) {
@@ -1435,13 +1431,17 @@ async function refreshJudgeIdentityStatus() {
       title: 'Juge non affecté',
       message: 'Vous n\'êtes pas affecté à cette compétition. Le formulaire va être réinitialisé.'
     });
-    await performJudgeLogout({ silent: true });
+    await performJudgeLogout();
     return;
   }
 
   state.judgeName = String(payload?.judge?.name ?? '').trim();
   state.judgeRole = String(payload?.judgeRole ?? '').trim();
   state.isTrainee = Boolean(payload?.isTrainee);
+  // Repart d'une zone de statut vierge: un message laisse par la session
+  // precedente dans le meme onglet (validation de note, erreur de brouillon...)
+  // ne doit pas rester affiche une fois qu'une nouvelle session juge demarre.
+  setScoreResult('');
   setJudgeHeaderName(state.judgeName ? `${payload.judge.firstName || ''} ${String(payload.judge.lastName ?? '').toUpperCase()}`.trim() : 'Connecté');
   setJudgeCompetitionHeader(payload?.competition ?? null);
   setJudgeSectorBadge({ role: state.judgeRole, isTrainee: state.isTrainee });
@@ -1531,6 +1531,10 @@ async function authenticateJudge() {
   document.querySelector('#judge-id-hidden').value = payload.judge.id;
   document.querySelector('#judge-password').value = '';
 
+  // Repart d'une zone de statut vierge: un message laisse par la session
+  // precedente dans le meme onglet (validation de note, erreur de brouillon...)
+  // ne doit pas rester affiche une fois qu'une nouvelle session juge demarre.
+  setScoreResult('');
   renderJudgeStatus(payload);
   setJudgeCompetitionHeader(payload?.competition ?? null);
   setJudgeSectorBadge({ role: state.judgeRole, isTrainee: state.isTrainee });
@@ -1548,7 +1552,7 @@ async function authenticateJudge() {
 document.querySelector('#judge-competition').addEventListener('change', async () => {
   if (state.isConnected) {
     try {
-      await performJudgeLogout({ silent: true });
+      await performJudgeLogout();
     } catch {
     }
   }
@@ -1675,14 +1679,14 @@ document.querySelector('#score-form').addEventListener('submit', async (event) =
 
 window.addEventListener('pagehide', () => {
   if (state.isConnected) {
-    performJudgeLogout({ silent: true, bestEffort: true }).catch(() => {
+    performJudgeLogout({ bestEffort: true }).catch(() => {
     });
   }
 });
 
 window.addEventListener('beforeunload', () => {
   if (state.isConnected) {
-    performJudgeLogout({ silent: true, bestEffort: true }).catch(() => {
+    performJudgeLogout({ bestEffort: true }).catch(() => {
     });
   }
 });
