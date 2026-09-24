@@ -214,6 +214,7 @@ suivante (voir l'échange initial de conception pour le détail complet).
 - [ ] Phase 7 — marche en parallèle, bascule finale
 - [ ] Phase 8 — refonte du fonctionnement des grilles de notation (à planifier)
 - [ ] Phase 9 — étude de faisabilité : synchronisation automatique de la base locale (à planifier)
+- [ ] Phase 10 — classement national / sélection championnat de France (à planifier)
 
 ### Phase 6bis
 
@@ -333,6 +334,29 @@ le mécanisme de synchronisation par journal d'événements déjà présent
 et le comportement hors-ligne (l'application doit rester utilisable en
 compétition sans réseau fiable). À traiter une fois les phases précédentes
 terminées et validées.
+
+### Phase 10 (à planifier plus tard)
+
+Demande de l'utilisateur : dans la partie "Administration", pouvoir établir une sorte
+de classement national — à la suite des classements régionaux — pour déterminer les
+compétiteurs sélectionnables au championnat de France.
+
+Critères de sélection confirmés par l'utilisateur comme faisant partie du périmètre
+(liste non exhaustive, à formaliser) :
+- un seuil de note minimal à atteindre ;
+- des quotas par région ;
+- un nombre de places par catégorie.
+
+L'utilisateur a aussi évoqué la mise en place d'une sorte de questionnaire, sans
+détail supplémentaire pour l'instant. Point explicite de l'utilisateur : il doit
+d'abord poser l'ensemble de la règle de sélection sur papier avant que cette phase
+puisse être spécifiée puis conçue — ne pas commencer l'implémentation avant ça.
+
+Restent à clarifier une fois la règle posée sur papier : la source des classements
+régionaux (agrégation de plusieurs bases/postes locaux, ce qui recoupe potentiellement
+la Phase 9), et si le résultat attendu est un export (PDF/liste) ou un écran de gestion
+interactif dans l'Administration. À traiter une fois les phases précédentes (et le
+choix Node vs Python pour la version 2) actés.
 
 ### Détail Phase 6
 
