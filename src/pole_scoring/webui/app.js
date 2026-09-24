@@ -4899,12 +4899,23 @@ function ensureConductorJudgePresencePolling() {
 // leger, actif uniquement dans ce contexte (cf. README, "Phase 6bis") — le
 // comportement navigateur/Node (postMessage instantane) reste inchange.
 function ensureConductorTabletSyncPolling() {
-  if (conductorTabletSyncTimer || !isPywebviewHost()) {
+  if (conductorTabletSyncTimer) {
     return;
   }
 
   conductorTabletSyncTimer = window.setInterval(async () => {
-    if (document.visibilityState === 'hidden' || activeSection !== 'conductor') {
+    // isPywebviewHost() est verifie ICI (a chaque tick), pas a l'appel de cette
+    // fonction: window.pywebview n'est injecte par l'hote natif qu'apres le
+    // chargement initial de la page, donc au moment ou ensureConductorTabletSyncPolling()
+    // s'execute (au chargement du script) isPywebviewHost() renvoie toujours false et
+    // l'intervalle n'etait alors jamais cree — le sondage ne demarrait donc jamais.
+    //
+    // Ne pas filtrer sur document.visibilityState: dans ce contexte multi-fenetres
+    // pywebview, la fenetre principale peut etre rapportee "hidden" des qu'elle
+    // n'a plus le focus OS (ex. tablet-recap au premier plan) alors qu'elle reste
+    // affichee — ce qui bloquerait tout rafraichissement tant que la popup a le
+    // focus, et parfois apres sa fermeture si le focus ne revient pas seul.
+    if (!isPywebviewHost() || activeSection !== 'conductor') {
       return;
     }
 
