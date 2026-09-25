@@ -140,3 +140,11 @@ async def update_competitor_status(competitor_id: str, request: Request, db: Dat
     return competitors_service.update_competitor_status(
         db, competitor_id=competitor_id, status=require_string(body.get("status"), "status")
     )
+
+
+@router.post("/competitors/{competitor_id}/resident")
+async def update_competitor_resident(competitor_id: str, request: Request, db: Database = Depends(get_database)) -> dict:
+    body = await request.json()
+    return competitors_service.update_competitor_resident(
+        db, competitor_id=competitor_id, is_resident=body.get("isResident")
+    )

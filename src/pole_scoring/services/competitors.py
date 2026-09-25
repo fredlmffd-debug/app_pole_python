@@ -544,6 +544,35 @@ def update_competitor_status(db: Database, *, competitor_id: str, status: str) -
     return get_competitor_by_id(db, competitor_id)
 
 
+def update_competitor_resident(db: Database, *, competitor_id: str, is_resident: object) -> dict:
+    existing_competitor = get_competitor_by_id(db, competitor_id)
+
+    if existing_competitor is None:
+        raise ValueError("Compétiteur introuvable")
+
+    updated_competitor = normalize_competitor_payload(
+        {
+            "id": existing_competitor["id"],
+            "competition_id": existing_competitor["competitionId"],
+            "stage_name": existing_competitor["stageName"],
+            "first_name": existing_competitor["firstName"],
+            "last_name": existing_competitor["lastName"],
+            "category": existing_competitor["category"],
+            "running_order": existing_competitor["runningOrder"],
+            "is_resident": normalize_competitor_resident_flag(is_resident),
+            "status": existing_competitor["status"],
+            "created_at": existing_competitor["createdAt"],
+            "updated_at": next_timestamp_after(existing_competitor["updatedAt"]),
+        }
+    )
+
+    with db.transaction():
+        _upsert_competitor(db, updated_competitor)
+        record_event(db, "competitor", updated_competitor["id"], "upsert", updated_competitor, get_node_id(db))
+
+    return get_competitor_by_id(db, competitor_id)
+
+
 def list_competitors(db: Database, competition_id: str) -> list[dict]:
     competitors = db.query_all(
         """

@@ -3891,6 +3891,7 @@ function renderCompetitorsTable(competition, competitors) {
             <span role="cell"><span class="competitor-athlete-cell">${residentBadge}${escapeHtml(athleteLabel)}</span></span>
             <span role="cell">
               <div class="competitor-row-actions">
+                <button type="button" class="competitor-resident-badge competitor-resident-toggle${competitor.isResident ? '' : ' is-inactive'}" data-competitor-id="${competitor.id}" data-competitor-resident-toggle data-current-resident="${competitor.isResident ? '1' : '0'}" title="Statut Résident" aria-label="Statut Résident" aria-pressed="${competitor.isResident ? 'true' : 'false'}">R</button>
                 <button type="button" class="ghost-button competitor-status-button${competitor.status === 'withdrawn' ? ' is-selected' : ''}" data-competitor-id="${competitor.id}" data-competitor-status="withdrawn" data-current-status="${competitor.status}">${escapeHtml(withdrawalLabel)}</button>
                 <button type="button" class="ghost-button competitor-status-button${competitor.status === 'forfeit' ? ' is-selected' : ''}" data-competitor-id="${competitor.id}" data-competitor-status="forfeit" data-current-status="${competitor.status}">${escapeHtml(forfeitLabel)}</button>
               </div>
@@ -3914,6 +3915,23 @@ function renderCompetitorsTable(competition, competitors) {
         });
         await renderCompetitorManagementSection();
         showToast('Statut compétiteur mis à jour.', 'success');
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    });
+  });
+
+  root.querySelectorAll('[data-competitor-resident-toggle]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const nextIsResident = button.dataset.currentResident !== '1';
+
+      try {
+        await request(`/api/competitors/${button.dataset.competitorId}/resident`, {
+          method: 'POST',
+          body: JSON.stringify({ isResident: nextIsResident })
+        });
+        await renderCompetitorManagementSection();
+        showToast(nextIsResident ? 'Compétiteur marqué résident.' : 'Statut résident retiré.', 'success');
       } catch (error) {
         showToast(error.message, 'error');
       }
