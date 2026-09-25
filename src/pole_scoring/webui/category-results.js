@@ -114,7 +114,29 @@ function getPodiumIcon(rank) {
   return null;
 }
 
-function buildRankingRows(results) {
+function isResidentAthlete(result) {
+  const directFlag = result?.isResident ?? result?.resident;
+
+  if (typeof directFlag === 'boolean') {
+    return directFlag;
+  }
+
+  if (directFlag === 1 || directFlag === '1') {
+    return true;
+  }
+
+  const residentKeys = [
+    directFlag,
+    result?.status,
+    result?.residentStatus,
+    result?.residentLabel
+  ];
+
+  return residentKeys.some((entry) => String(entry ?? '').trim().toLowerCase().includes('resident')
+    || String(entry ?? '').trim().toLowerCase().includes('résident'));
+}
+
+function buildFullRankingRows(results) {
   let previousFinalScore = null;
   let previousTechnicalScore = null;
   let displayedRank = 0;
@@ -140,7 +162,49 @@ function buildRankingRows(results) {
       candidateLabel: formatCompetitorLabel(result),
       finalScore: formatScore(result.finalScore),
       technicalScore: formatScore(result.technicalScore),
-      artisticScore: formatScore(result.artisticScore)
+      artisticScore: formatScore(result.artisticScore),
+      isResident: isResidentAthlete(result)
+    };
+  });
+}
+
+// Meme regle que la vue globale (competition-results.js, buildPodiumRows /
+// applySelectiveRanking) : un resident n'occupe jamais une place officielle
+// du classement — les autres candidats sont renumerotes en continu comme
+// s'il n'existait pas. S'il aurait ete dans le top 3 sur son rang brut, il
+// recoit la mention "Prix spécial du jury" a la place d'un rang.
+function applySelectiveRanking(fullRows) {
+  let selectivePosition = 0;
+  let displayedSelectiveRank = 0;
+  let previousEligibleRow = null;
+
+  return fullRows.map((row) => {
+    if (row.isResident) {
+      return {
+        ...row,
+        selectiveRank: null,
+        selectiveRankLabel: row.rank <= 3 ? 'Prix spécial du jury' : 'Résident'
+      };
+    }
+
+    selectivePosition += 1;
+
+    const hasSameScores = previousEligibleRow
+      && Number.isFinite(Number(row.finalScore))
+      && Number.isFinite(Number(previousEligibleRow.finalScore))
+      && row.finalScore === previousEligibleRow.finalScore
+      && row.technicalScore === previousEligibleRow.technicalScore;
+
+    if (!hasSameScores) {
+      displayedSelectiveRank = selectivePosition;
+    }
+
+    previousEligibleRow = row;
+
+    return {
+      ...row,
+      selectiveRank: displayedSelectiveRank,
+      selectiveRankLabel: String(displayedSelectiveRank)
     };
   });
 }
@@ -194,13 +258,14 @@ async function bootstrapCategoryResults() {
       return;
     }
 
-    const rows = buildRankingRows(rankedResults);
+    const rows = applySelectiveRanking(buildFullRankingRows(rankedResults));
     rowsRoot.innerHTML = rows.map((row) => `
-      <div class="category-results-row${row.rank <= 3 ? ` is-rank-${row.rank}` : ''}" role="row">
-        <span role="cell" class="category-results-rank-cell">
-          <strong>${row.rank}</strong>
+      <div class="category-results-row${(!row.isResident && Number.isFinite(Number(row.selectiveRank)) && Number(row.selectiveRank) <= 3) ? ` is-rank-${Number(row.selectiveRank)}` : ''}" role="row">
+        <span role="cell" class="category-results-rank-cell${row.isResident ? ' is-resident' : ''}">
+          <strong>${escapeHtml(row.selectiveRankLabel)}</strong>
           ${(() => {
-            const icon = getPodiumIcon(row.rank);
+            const selectiveRank = Number(row.selectiveRank);
+            const icon = Number.isFinite(selectiveRank) ? getPodiumIcon(selectiveRank) : null;
             return icon
               ? `<img class="category-results-rank-icon" src="${icon.src}" alt="${escapeHtml(icon.alt)}">`
               : '';

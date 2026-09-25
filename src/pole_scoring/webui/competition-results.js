@@ -222,7 +222,10 @@ function applySelectiveRanking(fullRows) {
       return {
         ...row,
         selectiveRank: null,
-        selectiveRankLabel: 'Résident'
+        // Meme regle que le podium (buildPodiumRows) : seul un resident dont
+        // le rang brut aurait ete dans le top 3 recoit la mention du prix
+        // special, pour rester coherent entre les deux vues.
+        selectiveRankLabel: row.rank <= 3 ? 'Prix spécial du jury' : 'Résident'
       };
     }
 
