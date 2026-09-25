@@ -165,9 +165,13 @@
                 <h3>Actions serveur</h3>
               </div>
               <div class="quick-actions server-actions-grid">
+                <!-- Pas de "Relance serveur" / "Quitter serveur" ici : contrairement a
+                     Node, l'app Python tourne en un seul processus (fenetre native +
+                     serveur FastAPI dans un thread interne) ; fermer la fenetre suffit
+                     a tout arreter proprement, et il n'y a pas de mecanisme de relance
+                     du serveur seul sans relancer toute l'app (cf. app_pole/CLAUDE.md,
+                     Node est le seul a exposer ces controles). -->
                 <button type="button" class="quick-action" data-server-control="presenter-results">Envoi des résultats</button>
-                <button type="button" class="quick-action ghost-button" data-server-control="restart">Relance serveur</button>
-                <button type="button" class="quick-action danger-button" data-server-control="shutdown">Quitter serveur</button>
               </div>
             </article>
           </div>
