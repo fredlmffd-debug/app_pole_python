@@ -1118,8 +1118,15 @@ function renderScoreGrid({ activePassage, prefilledScores = new Map() }) {
   config.criteria.forEach((criterion) => {
     const fullCriterion = `${config.criterionPrefix}${criterion.criterionKey}`;
     const existingValue = Number(prefilledScores.get(fullCriterion));
-    const defaultValue = Number.isFinite(existingValue) ? existingValue : 0;
-    state.selectedScoresByCriterion.set(criterion.criterionKey, defaultValue);
+
+    // Aucune note preselectionnee par defaut: avec un 0 mis en avant a
+    // l'ouverture, les juges ne comprenaient pas toujours qu'il fallait
+    // recliquer dessus pour l'attribuer explicitement. Un critere absent de
+    // la map s'affiche sans surbrillance (applyScoreSelectionStyles) et vaut
+    // 0 a la validation si toujours non choisi (cf. saveJudgeScorecard).
+    if (Number.isFinite(existingValue)) {
+      state.selectedScoresByCriterion.set(criterion.criterionKey, existingValue);
+    }
   });
 
   passageNode.textContent = formatPassageHeading(activePassage);
